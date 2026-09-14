@@ -4,6 +4,12 @@
 
 **[Install from Microsoft Marketplace](https://marketplace.microsoft.com/en-us/product/WA200012017)** · [excelente.aiedge.ac](https://excelente.aiedge.ac) · [Apache 2.0](LICENSE) · Built by [A.CRE](https://www.adventuresincre.com) and [AI.Edge](https://aiedge.ac)
 
+<p align="center">
+  <img src="docs/screenshots/chat.png" width="32%" alt="Excelente chat pane inside Excel, showing the selected model">
+  <img src="docs/screenshots/compare-models.png" width="32%" alt="Compare models panel ranking OpenRouter models by capability and price">
+  <img src="docs/screenshots/skills.png" width="32%" alt="Capabilities panel listing installed skills">
+</p>
+
 ---
 
 ## Why We Built Excelente
