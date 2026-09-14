@@ -1,0 +1,73 @@
+Excelente
+Copyright 2025-2026 CRE Edge, LLC, a wholly owned subsidiary of
+www.adventuresincre.com, LLC (https://aiedge.ac)
+
+This product includes software developed at CRE Edge, LLC.
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+==========================================================================
+NOT COVERED BY THE APACHE LICENSE 2.0
+==========================================================================
+
+Two categories of material in this repository are excluded from the
+Apache License 2.0 grant. Everything else in the repository is Apache 2.0.
+
+1. NAMES AND BRAND ASSETS
+
+   "Excelente", "A.CRE", "Adventures in CRE", "AI.Edge", and "CRE Edge",
+   together with the associated logos, wordmarks, and brand assets
+   (including the files under apps/excel-addin/public/assets/ and
+   apps/excel-addin/public/assets/connectors/), are trademarks and trade
+   dress of CRE Edge, LLC and are not licensed under the Apache License
+   2.0.
+
+   "CRE Agents" is a trademark of CRE Agents, Inc. We hold no rights in
+   it to grant.
+
+   Apache License 2.0 Section 6 does not grant trademark rights. See
+   TRADEMARKS.md for what is and is not permitted, including a checklist
+   for renaming a fork.
+
+2. BUNDLED SKILLS
+
+   The contents of apps/excel-addin/skills/ are not licensed under the
+   Apache License 2.0. Each bundled skill carries its own license and
+   attribution. See apps/excel-addin/skills/LICENSE.md.
+
+==========================================================================
+THIRD-PARTY DEPENDENCIES
+==========================================================================
+
+This product depends on third-party packages declared in
+apps/excel-addin/package.json, each governed by its own license. Notable
+Apache-2.0 dependencies whose NOTICE obligations pass through:
+
+  pdfjs-dist   Copyright Mozilla Foundation
+  xlsx         Copyright (C) 2012-present SheetJS LLC
+
+Consult package-lock.json for the complete dependency set and the license
+of each package.
+
+==========================================================================
+HISTORICAL ATTRIBUTION
+==========================================================================
+
+Between 2026-06-13 and 2026-09-05, releases of Excelente bundled nine
+skills adapted from the CRE Skills Plugin by Mario Urquia
+(https://github.com/mariourquia/cre-skills-plugin), Apache License 2.0.
+Those skills were replaced on 2026-09-05 and no material from that
+project remains in this repository. The notice is retained because
+Apache-2.0 Section 4(d) obligations attach to the releases that carried
+it:
+
+  CRE Skills Plugin
+  Copyright 2026 Mario Urquia (https://mariourquia.com)
+
+  This product includes orchestration patterns and pipeline architecture
+  derived from the CRE Acquisition Orchestrator by Avi Hacker
+  (https://github.com/ahacker-1/cre-acquisition-orchestrator),
+  licensed under the Apache License 2.0.
+
+  Original CRE Acquisition Orchestrator:
+  Copyright 2026 Avi Hacker (https://www.theaiconsultingnetwork.com)

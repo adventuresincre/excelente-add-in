@@ -1,0 +1,61 @@
+/* In-pane yes/no for destructive actions. Replaces window.confirm(), which
+   is a silent no-op in Excel for Mac's WKWebView task pane. Uses only
+   design tokens so it reads correctly in every panel it appears in. */
+
+.confirm-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px var(--sp-2);
+  font-size: var(--fs-overline);
+  color: var(--text-body);
+  background: var(--cream-dark);
+  border: 1px solid var(--destructive);
+  border-radius: var(--r-md);
+  white-space: nowrap;
+}
+
+.confirm-button:focus-visible {
+  outline: 2px solid var(--charcoal);
+  outline-offset: 1px;
+}
+
+.confirm-button__question {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.confirm-button__confirm,
+.confirm-button__cancel {
+  appearance: none;
+  padding: 1px var(--sp-2);
+  font-size: var(--fs-overline);
+  font-weight: 500;
+  border-radius: var(--r-full);
+  cursor: pointer;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    color var(--duration-micro) var(--ease-editorial);
+}
+
+.confirm-button__confirm {
+  color: var(--warm-white);
+  background: var(--destructive);
+  border: 1px solid var(--destructive);
+}
+
+.confirm-button__confirm:hover {
+  filter: brightness(0.9);
+}
+
+.confirm-button__cancel {
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-card);
+}
+
+.confirm-button__cancel:hover {
+  color: var(--charcoal);
+  border-color: var(--charcoal);
+}

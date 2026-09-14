@@ -1,0 +1,75 @@
+name: Bug report
+description: Something is broken
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The host and model fields matter more than
+        you would expect: Excel behaves differently across Windows, Mac, and
+        web, and models differ from each other a lot.
+
+        If this is a security issue, please do not file it here. See
+        [SECURITY.md](../blob/main/SECURITY.md).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+      placeholder: |
+        Asked for a two-way sensitivity table on B14. It wrote into B2 and
+        overwrote the header row.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Steps, and what the workbook looked like. A minimal workbook helps a lot.
+      placeholder: |
+        1. Blank sheet, headers in row 2
+        2. Ask "build a sensitivity table on exit cap and rent growth"
+        3. Watch row 2
+    validations:
+      required: true
+
+  - type: input
+    id: excel-host
+    attributes:
+      label: Excel host and version
+      description: Help > About Excel, or the version string in the web app.
+      placeholder: Excel 365 Windows 16.0.18227.20162
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: The OpenRouter model id you had selected.
+      placeholder: anthropic/claude-sonnet-5
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Excelente version
+      description: Settings, at the bottom. Or the commit you built from.
+      placeholder: 0.4.2+6fbd3ad
+    validations:
+      required: false
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: >
+        Right-click the task pane and choose Inspect (Windows) or attach the
+        Safari Web Inspector (Mac). Paste anything red. Scrub your API key if
+        it appears.
+      render: text
+    validations:
+      required: false

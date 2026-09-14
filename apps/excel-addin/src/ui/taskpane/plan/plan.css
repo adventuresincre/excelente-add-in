@@ -1,0 +1,318 @@
+/*
+ * Plan tab — full-width dedicated view for the most recent plan. Replaces
+ * the inline PlanCard for everything except a compact breadcrumb pill that
+ * still sits in chat. Tokens from /src/ui/design/tokens.css.
+ */
+
+.plan-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  background: var(--cream);
+  overflow-y: auto;
+}
+
+.plan-view__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.plan-view__heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.plan-view__label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--gold-muted);
+}
+
+.plan-view__id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+}
+
+.plan-view__back {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-view__back:hover {
+  color: var(--charcoal);
+}
+
+/* --------------------------------- Progress ------------------------------- */
+
+.plan-view__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.plan-view__progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--cream-dark);
+  border: 1px solid var(--border-inner);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.plan-view__progress-fill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 250ms var(--ease-editorial);
+}
+
+.plan-view__progress-label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------- Steps --------------------------------- */
+
+.plan-view__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.plan-view__step {
+  display: grid;
+  grid-template-columns: 18px 22px 1fr;
+  gap: var(--sp-2);
+  align-items: start;
+  padding: var(--sp-3);
+  background: var(--white);
+  border: 1px solid var(--border-inner);
+  border-left: 3px solid transparent;
+  border-radius: var(--r-base);
+  transition: border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-view__step--in-progress {
+  border-color: var(--gold-badge-border);
+  border-left-color: var(--gold);
+  background: var(--warm-white);
+}
+
+.plan-view__step--done {
+  opacity: 0.75;
+}
+
+.plan-view__step--blocked {
+  border-color: var(--destructive);
+  border-left-color: var(--destructive);
+}
+
+.plan-view__step-marker {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-muted);
+  padding-top: 2px;
+}
+
+.plan-view__step--in-progress .plan-view__step-marker {
+  color: var(--gold);
+}
+
+.plan-view__step--done .plan-view__step-marker {
+  color: var(--gold-muted);
+}
+
+.plan-view__step--blocked .plan-view__step-marker {
+  color: var(--destructive);
+}
+
+.plan-view__step-num {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--gold-muted);
+  text-align: right;
+  line-height: 1.2;
+}
+
+.plan-view__step-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.plan-view__step-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.plan-view__step-title {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--charcoal);
+  line-height: var(--lh-snug);
+}
+
+.plan-view__step--done .plan-view__step-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.plan-view__step-details {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+  line-height: var(--lh-normal);
+}
+
+.plan-view__step-note {
+  margin: 0;
+  font-size: var(--fs-overline);
+  color: var(--destructive);
+  font-style: italic;
+}
+
+.plan-view__chip {
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-card);
+  background: var(--cream-dark);
+  color: var(--text-muted);
+}
+
+.plan-view__chip--in-progress {
+  background: var(--gold-badge-bg);
+  border-color: var(--gold-badge-border);
+  color: var(--gold-badge-text);
+}
+
+.plan-view__chip--done {
+  background: var(--cream-dark);
+  color: var(--gold-muted);
+}
+
+.plan-view__chip--blocked {
+  background: var(--white);
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
+/* --------------------------------- Actions -------------------------------- */
+
+.plan-view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-divider);
+}
+
+.plan-view__promote {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-base);
+  padding: 9px 16px;
+  background: var(--charcoal);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-button);
+  cursor: pointer;
+  transition: background var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-view__promote:hover {
+  background: var(--charcoal-light);
+}
+
+.plan-view__review {
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  padding: 8px 14px;
+  background: var(--white);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-view__review:hover {
+  background: var(--cream-dark);
+  border-color: var(--gold-muted);
+}
+
+.plan-view__action-hint {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  font-style: italic;
+  flex-basis: 100%;
+}
+
+/* --------------------------------- Empty ---------------------------------- */
+
+.plan-view--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+}
+
+.plan-view__title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--charcoal);
+  margin: 0;
+}
+
+.plan-view__title em.accent {
+  font-style: italic;
+  color: var(--gold-muted);
+}
+
+.plan-view__hint {
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+  line-height: var(--lh-normal);
+  margin: 0;
+}

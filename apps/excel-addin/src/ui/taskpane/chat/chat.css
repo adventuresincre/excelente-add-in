@@ -1,0 +1,2961 @@
+/*
+ * Chat surface — bubbles, tool lines, composer, approval card.
+ * All colors / typography come from /src/ui/design/tokens.css.
+ */
+
+.chat-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--cream);
+}
+
+/* Drag-and-drop overlay — appears when the user drags a file over the panel. */
+.chat-panel__drop-overlay {
+  position: absolute;
+  inset: var(--sp-3);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold-badge-bg);
+  border: 2px dashed var(--gold);
+  border-radius: var(--r-xl);
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.chat-panel__drop-overlay-text {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--charcoal);
+  letter-spacing: -0.01em;
+}
+
+.chat-panel__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-5) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ------------------------- Plan strip + plan sheet ------------------------ */
+/* The plan is session state, so it lives here rather than on the
+   Capabilities tab beside the durable Skills/Connectors config. The strip
+   pins above the scroller so progress survives a long autonomous run
+   instead of scrolling away; the sheet is the full PlanView over the panel,
+   on the same absolute-overlay pattern as the drop target. */
+
+.chat-panel__plan-strip {
+  flex: 0 0 auto;
+  padding: var(--sp-2) var(--sp-5);
+  background: var(--cream);
+  border-bottom: 1px solid var(--border-card);
+}
+
+.chat-panel__plan-sheet {
+  position: absolute;
+  inset: 0;
+  /* Under the drop overlay (10) so dragging a file onto an open plan still
+     reads as a drop target; over everything else in the panel. */
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  box-shadow: var(--shadow-deep);
+  overflow-y: auto;
+}
+
+.chat-panel__plan-sheet .plan-view {
+  flex: 1;
+}
+
+/* ------------------------------ Empty state ------------------------------ */
+
+.chat-panel__empty {
+  margin: auto 0;
+  padding: 0 var(--sp-4);
+  text-align: center;
+  color: var(--text-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+}
+
+.chat-panel__brand-mark {
+  display: block;
+  margin: 0 auto var(--sp-3);
+}
+
+.chat-panel__empty h2 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--charcoal);
+  line-height: var(--lh-snug);
+  margin-bottom: var(--sp-3);
+}
+
+.chat-panel__empty em.accent {
+  font-style: italic;
+  color: var(--gold-muted);
+}
+
+.chat-panel__empty p {
+  margin: 0 0 var(--sp-2);
+}
+
+.chat-panel__empty code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 1px 6px;
+  background: var(--cream-dark);
+  border-radius: var(--r-sm);
+  color: var(--charcoal);
+}
+
+.chat-panel__empty-hint {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  /* Ruled off from the copy above it: everything before this line is about
+     WHICH model you are on, this line is about what to do next. A short
+     centered rule rather than a full-width border so it reads as a pause,
+     not as a card edge. */
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  position: relative;
+}
+
+.chat-panel__empty-hint::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 1px;
+  background: var(--border-card);
+}
+
+.chat-panel__error {
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--white);
+  border: 1px solid var(--destructive);
+  border-radius: var(--r-lg);
+  color: var(--destructive);
+  font-size: var(--fs-small);
+  line-height: var(--lh-normal);
+}
+
+/* "Continue Working" affordance — shown when the agent paused because it
+   hit the per-send turn cap (not because it finished). Minimalist card,
+   centered, with a single gold-accented button that auto-sends "Continue".
+   Matches the rest of the chat surface: warm-white, gold-dark accent, no
+   heavy chrome. */
+.continue-working {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  /* Extra top padding keeps the dismiss control out of the first line of
+     the notice — at pane width the text wraps right under it otherwise. */
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  margin: var(--sp-2) auto var(--sp-2);
+  /* A bordered card, not the bare italic line this replaces. The stop it
+     reports is easy to miss otherwise — the only other cue is the composer
+     coming back, which looks identical to finishing successfully. */
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--warm-white);
+  box-shadow: var(--shadow-subtle);
+  text-align: center;
+}
+
+.continue-working__note {
+  margin: 0;
+  font-size: var(--fs-small);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+}
+
+.continue-working__hint {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+.continue-working__dismiss {
+  position: absolute;
+  top: var(--sp-1);
+  right: var(--sp-1);
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+  line-height: 1;
+  padding: var(--sp-1);
+  cursor: pointer;
+  border-radius: var(--r-full);
+}
+
+.continue-working__dismiss:hover {
+  color: var(--charcoal);
+  background: var(--border-card);
+}
+
+.continue-working__btn {
+  appearance: none;
+  border: 1px solid var(--gold-dark);
+  background: var(--gold);
+  color: var(--charcoal);
+  border-radius: var(--r-full);
+  padding: var(--sp-2) var(--sp-4);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    transform var(--duration-micro) var(--ease-editorial),
+    box-shadow var(--duration-micro) var(--ease-editorial);
+  box-shadow: var(--shadow-subtle);
+}
+
+.continue-working__btn:hover {
+  background: var(--gold-dark);
+  color: var(--cream);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Jump-to-bottom button. Shown only when the user has scrolled UP from
+   the bottom AND there's something in the chat. Disappears the moment
+   they're back at the bottom (auto-scroll resumes naturally). Floats
+   above the composer at the right edge — small, unobtrusive, charcoal
+   on cream so it pops against either bubble color. */
+.chat-panel__jump-bottom {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: 100px;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-card);
+  border-radius: 50%;
+  background: var(--charcoal);
+  color: var(--cream);
+  cursor: pointer;
+  font-size: var(--fs-body);
+  line-height: 1;
+  box-shadow: var(--shadow-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    transform var(--duration-micro) var(--ease-editorial);
+}
+
+.chat-panel__jump-bottom:hover {
+  background: var(--charcoal-dark, #000);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------- Bubbles -------------------------------- */
+
+.bubble {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-xl);
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+  max-width: 92%;
+}
+
+.bubble--user {
+  align-self: flex-end;
+  background: var(--charcoal);
+  color: var(--cream);
+  box-shadow: var(--shadow-subtle);
+}
+
+.bubble--assistant {
+  align-self: flex-start;
+  background: var(--warm-white);
+  color: var(--text-body);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-subtle);
+}
+
+.bubble__content {
+  word-break: break-word;
+}
+
+.bubble--user .bubble__content {
+  color: var(--cream);
+}
+
+.bubble--assistant .bubble__content {
+  color: var(--text-body);
+}
+
+/* Markdown elements rendered by react-markdown inside .bubble__content.
+   We render bold/italic/lists/code/links as their natural HTML elements
+   (react-markdown emits <strong>, <em>, <ul>, <code>, <a>, etc.). */
+
+.bubble__content p {
+  margin: 0 0 var(--sp-2);
+}
+
+.bubble__content p:last-child {
+  margin-bottom: 0;
+}
+
+.bubble__content strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.bubble--user .bubble__content strong {
+  color: var(--cream);
+}
+
+.bubble--assistant .bubble__content strong {
+  color: var(--charcoal);
+}
+
+.bubble__content em {
+  font-style: italic;
+}
+
+.bubble__content ul,
+.bubble__content ol {
+  margin: 0 0 var(--sp-2);
+  padding-left: 1.4em;
+}
+
+.bubble__content ul:last-child,
+.bubble__content ol:last-child {
+  margin-bottom: 0;
+}
+
+.bubble__content li {
+  margin-bottom: 2px;
+}
+
+.bubble__content code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 1px 5px;
+  border-radius: var(--r-sm);
+}
+
+.bubble--user .bubble__content code {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--cream);
+}
+
+.bubble--assistant .bubble__content code {
+  background: var(--cream-dark);
+  color: var(--charcoal);
+}
+
+.bubble__content pre {
+  margin: var(--sp-2) 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-base);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  line-height: var(--lh-normal);
+}
+
+.bubble--user .bubble__content pre {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cream);
+}
+
+.bubble--assistant .bubble__content pre {
+  background: var(--cream-dark);
+  color: var(--text-body);
+  border: 1px solid var(--border-inner);
+}
+
+.bubble__content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.bubble__content a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--gold-muted);
+  text-underline-offset: 2px;
+}
+
+.bubble__content h1,
+.bubble__content h2,
+.bubble__content h3,
+.bubble__content h4 {
+  margin: var(--sp-2) 0 var(--sp-1);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+}
+
+.bubble__content h1 {
+  font-size: 1.125rem;
+}
+.bubble__content h2 {
+  font-size: 1.05rem;
+}
+.bubble__content h3 {
+  font-size: 1rem;
+}
+.bubble__content h4 {
+  font-size: 0.95rem;
+}
+
+.bubble__content blockquote {
+  margin: var(--sp-2) 0;
+  padding-left: var(--sp-3);
+  border-left: 2px solid var(--gold-muted);
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* GitHub-flavored-markdown tables. Agents reach for these often (key
+   metrics tables, comparison grids, step lists with columns). Without
+   styling they default to no borders / no padding and read worse than
+   the raw pipes. Compact rules below — narrow padding so a 3-col table
+   fits the task pane width, subtle borders so rows are scannable. */
+.bubble__content table {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  margin: var(--sp-2) 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.bubble__content thead {
+  background: var(--cream-dark);
+}
+
+.bubble--user .bubble__content thead {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bubble__content th,
+.bubble__content td {
+  padding: 4px 8px;
+  border: 1px solid var(--border-inner);
+  text-align: left;
+  vertical-align: top;
+}
+
+.bubble--user .bubble__content th,
+.bubble--user .bubble__content td {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.bubble__content th {
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.bubble--user .bubble__content th {
+  color: var(--cream);
+}
+
+/* GFM also gives us strikethrough — make sure react-markdown's <del>
+   renders sensibly. */
+.bubble__content del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.bubble__cursor {
+  display: inline-block;
+  width: 6px;
+  height: 1em;
+  margin-left: 2px;
+  background: currentColor;
+  vertical-align: text-bottom;
+  animation: bubble-blink 1s steps(2, end) infinite;
+}
+
+@keyframes bubble-blink {
+  to {
+    opacity: 0;
+  }
+}
+
+/*
+ * Brand-mark loader at the bottom of the message list whenever the agent is
+ * doing something between text outputs (thinking, calling tools, dispatching
+ * subagents). The E body stays still; the three middle squares pulse in
+ * sequence so the logo itself is the indicator — not a generic three-dot
+ * spinner under the brand.
+ */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0.25rem 0 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.typing-indicator__logo {
+  /* The E itself uses brand gold, NOT the parent color, so the indicator
+     reads as "Excelente working" rather than blending with body text. */
+  color: var(--gold-text);
+  flex-shrink: 0;
+}
+
+/* Animate only the three middle-bar squares. The path (the E body) is
+   static so the logo silhouette stays recognizable while the squares
+   convey motion. */
+.typing-indicator__logo rect {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: typing-square-pulse 1.4s ease-in-out infinite;
+}
+
+.typing-indicator__logo rect:nth-of-type(2) {
+  animation-delay: 0.18s;
+}
+
+.typing-indicator__logo rect:nth-of-type(3) {
+  animation-delay: 0.36s;
+}
+
+.typing-indicator__label {
+  font-style: italic;
+}
+
+@keyframes typing-square-pulse {
+  0%,
+  70%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Reasoning toggle — ghost-quiet inline link. Lowercase italic so a stream
+   of thinking trails reads as background, not chrome. */
+.bubble__reasoning {
+  font-size: var(--fs-overline);
+  line-height: var(--lh-normal);
+}
+
+.bubble__reasoning--below {
+  margin-top: var(--sp-1);
+}
+
+/* Standalone "thinking…" line — used when the assistant has emitted
+   reasoning but no content yet. Renders OUTSIDE any bubble shell so the
+   chat doesn't get a near-empty white card sitting there during a long
+   reasoning stream. Aesthetic mirrors the tool-line: align-self start,
+   muted, single thin row, click to expand. */
+.bubble__reasoning--standalone {
+  align-self: flex-start;
+  padding: 2px var(--sp-2);
+  color: var(--text-muted);
+}
+
+.bubble__reasoning--standalone .bubble__reasoning-body {
+  margin-top: 4px;
+  max-width: 92%;
+}
+
+.bubble__reasoning-toggle {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-style: italic;
+  font-weight: 400;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity var(--duration-micro) var(--ease-editorial);
+}
+
+.bubble__reasoning-toggle:hover {
+  opacity: 0.9;
+}
+
+.bubble__reasoning-chevron {
+  display: inline-block;
+  font-size: 9px;
+  transition: transform var(--duration-micro) var(--ease-editorial);
+}
+
+.bubble__reasoning-toggle.is-open .bubble__reasoning-chevron {
+  transform: rotate(90deg);
+}
+
+/* Brand-mark loader inside the standalone "thinking" toggle. Re-uses the
+   typing-indicator__logo class so the per-rect animation rules apply,
+   but locks color to gold (loader stays the brand even when the parent
+   toggle's color shifts via .bubble--user / hover). */
+.bubble__reasoning-loader.typing-indicator__logo {
+  color: var(--gold-text);
+  margin-right: 2px;
+  vertical-align: middle;
+}
+
+.bubble--user .bubble__reasoning-toggle {
+  color: var(--cream);
+}
+
+.bubble--assistant .bubble__reasoning-toggle {
+  color: var(--text-muted);
+}
+
+.bubble__reasoning-body {
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-base);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+}
+
+.bubble__reasoning-body p {
+  margin: 0 0 var(--sp-1);
+}
+
+.bubble__reasoning-body p:last-child {
+  margin-bottom: 0;
+}
+
+.bubble__reasoning-body strong {
+  font-weight: 600;
+}
+
+.bubble__reasoning-body em {
+  font-style: italic;
+}
+
+.bubble__reasoning-body ul,
+.bubble__reasoning-body ol {
+  margin: var(--sp-1) 0;
+  padding-left: 1.3em;
+}
+
+.bubble__reasoning-body li {
+  margin-bottom: 2px;
+}
+
+.bubble__reasoning-body code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border-radius: var(--r-sm);
+}
+
+.bubble__reasoning-body pre {
+  margin: var(--sp-1) 0;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+}
+
+.bubble__reasoning-body h1,
+.bubble__reasoning-body h2,
+.bubble__reasoning-body h3,
+.bubble__reasoning-body h4 {
+  margin: var(--sp-2) 0 var(--sp-1);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-snug);
+}
+
+.bubble--user .bubble__reasoning-body {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--cream);
+}
+
+.bubble--user .bubble__reasoning-body code {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--cream);
+}
+
+.bubble--assistant .bubble__reasoning-body {
+  background: var(--cream-dark);
+  color: var(--text-body);
+}
+
+.bubble--assistant .bubble__reasoning-body code {
+  background: var(--warm-white);
+  color: var(--charcoal);
+}
+
+/* ------------------------ Bubble attachment previews ---------------------- */
+
+.bubble__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: 2px;
+}
+
+.bubble__attachment {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-base);
+  font-size: var(--fs-overline);
+}
+
+.bubble--user .bubble__attachment {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--cream);
+}
+
+.bubble--assistant .bubble__attachment {
+  background: var(--cream-dark);
+  color: var(--text-body);
+}
+
+.bubble__attachment--image img {
+  max-width: 160px;
+  max-height: 120px;
+  border-radius: var(--r-md);
+  display: block;
+}
+
+.bubble__attachment-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+.bubble__attachment-meta {
+  opacity: 0.7;
+  font-size: var(--fs-overline);
+}
+
+/* --------------------------------- Plan pill ------------------------------ */
+/* Compact inline placeholder that replaces the inline PlanCard. Clicking
+   the pill routes to the dedicated Plan tab. */
+
+.plan-pill {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-base);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-pill:hover {
+  background: var(--cream-dark);
+  border-left-color: var(--gold-dark);
+}
+
+.plan-pill--active {
+  border-left-color: var(--gold);
+  background: var(--gold-badge-bg);
+}
+
+.plan-pill--blocked {
+  border-left-color: var(--destructive);
+}
+
+.plan-pill--done {
+  border-left-color: var(--gold-muted);
+  opacity: 0.85;
+}
+
+.plan-pill__icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.plan-pill__label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--gold-muted);
+}
+
+.plan-pill__progress {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--charcoal);
+  padding: 1px 6px;
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+}
+
+.plan-pill__detail {
+  flex: 1;
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-pill__chevron {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* --------------------------------- Plan card ------------------------------ */
+/* Kept for backward compatibility; the new design uses PlanPill inline +
+   PlanView on a dedicated tab. PlanCard is no longer rendered in the chat
+   stream but exists in the bundle in case it's needed elsewhere. */
+
+.plan-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--gold-badge-border);
+  border-left: 4px solid var(--gold);
+  border-radius: var(--r-xl);
+  background: var(--warm-white);
+  box-shadow: var(--shadow-subtle);
+}
+
+.plan-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.plan-card__title {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  color: var(--charcoal);
+  letter-spacing: -0.01em;
+}
+
+.plan-card__id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+}
+
+.plan-card__steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.plan-card__step {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--white);
+  border: 1px solid var(--border-inner);
+  border-radius: var(--r-base);
+  transition: border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-card__step--done {
+  opacity: 0.7;
+}
+
+.plan-card__step--in-progress {
+  border-color: var(--gold);
+}
+
+.plan-card__step--blocked {
+  border-color: var(--destructive);
+}
+
+.plan-card__step-num {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--gold-muted);
+  min-width: 1.25em;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.plan-card__step-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.plan-card__step-title {
+  font-size: var(--fs-small);
+  color: var(--charcoal);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+}
+
+.plan-card__step--done .plan-card__step-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.plan-card__step-details {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+}
+
+.plan-card__step-note {
+  font-size: var(--fs-overline);
+  color: var(--destructive);
+  font-style: italic;
+}
+
+.plan-card__chip {
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-card);
+  background: var(--cream-dark);
+  color: var(--text-muted);
+}
+
+.plan-card__chip--in-progress {
+  background: var(--gold-badge-bg);
+  border-color: var(--gold-badge-border);
+  color: var(--gold-badge-text);
+}
+
+.plan-card__chip--done {
+  background: var(--cream-dark);
+  border-color: var(--border-card);
+  color: var(--gold-muted);
+}
+
+.plan-card__chip--blocked {
+  background: var(--white);
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
+.plan-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.plan-card__promote {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-base);
+  padding: 8px 14px;
+  background: var(--charcoal);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-button);
+  cursor: pointer;
+  transition: background var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-card__promote:hover {
+  background: var(--charcoal-light);
+}
+
+.plan-card__review {
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  padding: 7px 12px;
+  background: var(--white);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.plan-card__review:hover {
+  background: var(--cream-dark);
+  border-color: var(--gold-muted);
+}
+
+.plan-card__action-hint {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* --------------------------------- Tool line ------------------------------ */
+/* One muted line per tool call. No borders, no fills — these are background
+   machinery, not foreground content. Errors get color; everything else
+   stays quiet. */
+
+.tool-line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  align-self: stretch;
+  padding: 2px var(--sp-2);
+  font-size: var(--fs-overline);
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  transition: background var(--duration-micro) var(--ease-editorial);
+}
+
+.tool-line:hover {
+  background: var(--warm-white);
+}
+
+.tool-line__icon {
+  display: inline-block;
+  width: 1em;
+  text-align: center;
+  font-size: var(--fs-overline);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.tool-line__name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-body);
+  background: transparent;
+  padding: 0;
+}
+
+.tool-line__summary {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ---- status glyphs (replaces .tool-line__status text) ---- */
+
+/* "auto" tag on tool calls the harness made (connector priming). Quiet:
+   same size as the line, gold-muted so it reads as provenance, not alarm. */
+.tool-line__auto {
+  margin-left: auto;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--gold-muted);
+  flex-shrink: 0;
+}
+
+.tool-line__auto + .tool-line__glyph {
+  margin-left: var(--sp-1);
+}
+
+.tool-line__glyph {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12px;
+  font-size: var(--fs-overline);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tool-line__glyph--pending {
+  color: var(--text-muted);
+  animation: tool-pulse 1.4s ease-in-out infinite;
+}
+
+.tool-line__glyph--running {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.tool-line__glyph--running > span {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--gold-muted);
+  animation: tool-pulse 1.4s ease-in-out infinite;
+}
+
+.tool-line__glyph--running > span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.tool-line__glyph--running > span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.tool-line__glyph--ok {
+  color: var(--success);
+  opacity: 0.65;
+}
+
+.tool-line__glyph--bad {
+  color: var(--destructive);
+}
+
+@keyframes tool-pulse {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+.tool-line--rejected,
+.tool-line--error {
+  color: var(--destructive);
+}
+
+.tool-line--rejected .tool-line__name,
+.tool-line--error .tool-line__name {
+  color: var(--destructive);
+}
+
+.tool-line__error {
+  font-size: var(--fs-overline);
+  color: var(--destructive);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  margin-left: var(--sp-1);
+  font-style: italic;
+}
+
+/* -------------------------------- Composer -------------------------------- */
+/* One surface, two rows: textarea on top, a thin icon toolbar below. The
+   message area is the focus; every control fades to a small ghost icon so
+   the user's eye lands on the text input, not the chrome. */
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-top: 1px solid var(--border-light);
+  background: var(--warm-white);
+}
+
+.composer__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: 0 0 var(--sp-1);
+}
+
+.composer__input-wrap {
+  position: relative;
+  display: flex;
+}
+
+.composer__input {
+  flex: 1;
+  /* Auto-grow up to a max height: composer hook sets `height = scrollHeight`
+     on every text change; min/max here clamps it. Past max-height, the
+     textarea grows a scrollbar instead of pushing the chat list offscreen. */
+  resize: none;
+  min-height: calc(var(--lh-normal) * 2em + var(--sp-4));
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--white);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  transition: border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.composer__input::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.composer__input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-badge-bg);
+}
+
+.composer__input:disabled {
+  background: var(--cream-dark);
+  color: var(--text-muted);
+}
+
+/* ---- toolbar (the row of icon buttons below the textarea) ---- */
+
+.composer__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px;
+}
+
+.composer__toolbar-spacer {
+  flex: 1;
+}
+
+/* AI-fallibility notice — small, quiet, italic. Below the toolbar so it
+   doesn't compete with the input. Standard "AI can make mistakes"
+   disclosure that AppSource expects for AI-powered add-ins. */
+.composer__ai-notice {
+  margin: var(--sp-1) 0 0;
+  padding: 0 2px;
+  font-size: var(--fs-overline);
+  font-style: italic;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.composer__icon-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-sm);
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    color var(--duration-micro) var(--ease-editorial),
+    background var(--duration-micro) var(--ease-editorial);
+}
+
+.composer__icon-btn:hover:not(:disabled) {
+  color: var(--charcoal);
+  background: var(--cream-dark);
+}
+
+.composer__icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---- compact mode pill (Plan / Work), inline in the toolbar ---- */
+
+.composer__mode {
+  display: inline-flex;
+  padding: 1px;
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-full);
+  margin: 0 2px;
+}
+
+.composer__mode-option {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-full);
+  padding: 2px var(--sp-2);
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    color var(--duration-micro) var(--ease-editorial);
+}
+
+.composer__mode-option:hover {
+  color: var(--charcoal);
+}
+
+.composer__mode-option.is-active {
+  background: var(--charcoal);
+  color: var(--cream);
+}
+
+/* ---- connector brand toggles (Vic, Hub) — right of undo ----
+   One 26px button per installed A.CRE preset. Color = on; grayscale = off
+   (still clickable); grayscale + gold dot = on but not connected. One SVG
+   serves every state via filter, so no gray variant ships. */
+
+.composer__brand-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--border-card);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.composer__brand {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  border-radius: var(--r-sm);
+  width: 26px;
+  height: 26px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background var(--duration-micro) var(--ease-editorial);
+}
+
+.composer__brand:hover,
+.composer__brand:focus-visible {
+  background: var(--cream-dark);
+}
+
+.composer__brand:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+.composer__brand-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  display: block;
+  transition:
+    filter var(--duration-micro) var(--ease-editorial),
+    opacity var(--duration-micro) var(--ease-editorial);
+}
+
+.composer__brand--off .composer__brand-mark,
+.composer__brand--error .composer__brand-mark {
+  filter: grayscale(1);
+  opacity: 0.42;
+}
+
+/* Handshake in flight: still the brand color (it IS on), just dimmed. */
+.composer__brand--connecting .composer__brand-mark {
+  opacity: 0.55;
+}
+
+.composer__brand-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: var(--gold-muted);
+  box-shadow: 0 0 0 1.5px var(--warm-white);
+}
+
+/* ---- circular send / stop button ---- */
+
+.composer__send {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-full);
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--charcoal);
+  color: var(--cream);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    opacity var(--duration-micro) var(--ease-editorial);
+}
+
+.composer__send:hover:not(:disabled) {
+  background: var(--charcoal-light);
+}
+
+.composer__send:disabled {
+  background: var(--text-muted);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.composer__send--stop {
+  background: var(--destructive);
+}
+
+.composer__send--stop:hover {
+  background: var(--destructive-hover);
+}
+
+/* ------------------------------- Slash menu ------------------------------- */
+
+.slash-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + var(--sp-2));
+  z-index: 20;
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-elevated);
+  max-height: 280px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.slash-menu__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-inner);
+  background: var(--cream-dark);
+}
+
+.slash-menu__heading {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--charcoal);
+}
+
+.slash-menu__hint {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+}
+
+.slash-menu__empty {
+  padding: var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+.slash-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-1);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slash-menu__item {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--r-base);
+  padding: var(--sp-2) var(--sp-3);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.slash-menu__item:hover,
+.slash-menu__item.is-active {
+  background: var(--white);
+  border-color: var(--gold-badge-border);
+}
+
+.slash-menu__item-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.slash-menu__item-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.slash-menu__item-source {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  padding: 1px 5px;
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+}
+
+.slash-menu__item-enabled {
+  margin-left: auto;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--gold-badge-text);
+  background: var(--gold-badge-bg);
+  border: 1px solid var(--gold-badge-border);
+  border-radius: var(--r-full);
+  padding: 0 6px;
+}
+
+.slash-menu__item-desc {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* --------------------------- Capability ("+") menu ----------------------- */
+
+/* Wraps the "+" button so the popover anchors to it. */
+.composer__menu-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+/* "+" button reads as pressed while its popover is open. */
+.composer__icon-btn.is-active {
+  color: var(--charcoal);
+  background: var(--cream-dark);
+}
+
+.capability-menu {
+  position: absolute;
+  bottom: calc(100% + var(--sp-2));
+  left: 0;
+  z-index: 20;
+  width: 280px;
+  max-width: min(280px, 80vw);
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-elevated);
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-1);
+}
+
+.capability-menu__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.capability-menu__group + .capability-menu__group {
+  margin-top: var(--sp-1);
+  border-top: 1px solid var(--border-inner);
+  padding-top: var(--sp-1);
+}
+
+.capability-menu__group-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+}
+
+.capability-menu__group-title {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--charcoal);
+}
+
+.capability-menu__manage {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  color: var(--gold-text);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--r-sm);
+}
+
+.capability-menu__manage:hover {
+  background: var(--cream-dark);
+}
+
+.capability-menu__empty {
+  margin: 0;
+  padding: var(--sp-1) var(--sp-2) var(--sp-2);
+  font-size: var(--fs-overline);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.capability-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.capability-menu__item {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--r-base);
+  padding: var(--sp-2);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.capability-menu__item:hover {
+  background: var(--white);
+  border-color: var(--gold-badge-border);
+}
+
+.capability-menu__check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--r-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  background: var(--white);
+}
+
+.capability-menu__item.is-active .capability-menu__check {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.capability-menu__item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.capability-menu__item-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--charcoal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.capability-menu__item-meta {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ------------------------------ Attach chips ----------------------------- */
+
+.attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 100%;
+  padding: 3px 4px 3px var(--sp-2);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-full);
+  color: var(--text-body);
+}
+
+.attach-chip__name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--charcoal);
+}
+
+.attach-chip__meta {
+  color: var(--text-muted);
+}
+
+.attach-chip__remove {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color var(--duration-micro) var(--ease-editorial);
+}
+
+.attach-chip__remove:hover {
+  color: var(--charcoal);
+}
+
+.attach-chip--pdf {
+  background: var(--gold-badge-bg);
+  border-color: var(--gold-badge-border);
+  color: var(--gold-badge-text);
+}
+
+.attach-chip--pending {
+  background: var(--cream-dark);
+  border-color: var(--gold-muted);
+  color: var(--gold-muted);
+}
+
+.attach-chip--error {
+  background: var(--white);
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
+/* ---------------------------- Approval card ------------------------------ */
+
+.approval-card {
+  margin: var(--sp-3) var(--sp-4) 0;
+  padding: var(--sp-4) var(--sp-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-xl);
+  background: var(--warm-white);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  box-shadow: var(--shadow-subtle);
+}
+
+/*
+ * The card takes focus programmatically when it appears (see
+ * ApprovalCard.tsx). `:focus-visible` would not match a programmatic focus
+ * in every engine, so use `:focus` here — a sighted keyboard user needs to
+ * see where the agent just moved them, and this card is never focused by
+ * accident.
+ */
+.approval-card:focus {
+  outline: 2px solid var(--gold-text);
+  outline-offset: 2px;
+}
+
+.approval-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.approval-card__icon {
+  font-size: 16px;
+  color: var(--gold-text);
+}
+
+.approval-card__heading {
+  font-size: var(--fs-small);
+  color: var(--text-body);
+  line-height: var(--lh-normal);
+}
+
+.approval-card__heading strong {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  background: var(--gold-badge-bg);
+  border: 1px solid var(--gold-badge-border);
+  color: var(--gold-badge-text);
+  padding: 1px 6px;
+  border-radius: var(--r-base);
+  margin-right: var(--sp-1);
+}
+
+.approval-card__summary {
+  font-size: var(--fs-small);
+  color: var(--charcoal);
+  background: var(--white);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+}
+
+.approval-card__details {
+  font-size: var(--fs-caption);
+}
+
+.approval-card__details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  user-select: none;
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+}
+
+.approval-card__details summary:hover {
+  color: var(--text-muted-hover);
+}
+
+.approval-card__json {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  max-height: 200px;
+  overflow: auto;
+  background: var(--cream-dark);
+  border: 1px solid var(--border-inner);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-body);
+}
+
+.approval-card__actions {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-top: var(--sp-2);
+}
+
+.approval-card__btn {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-lg);
+  padding: 8px var(--sp-3);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-button);
+  cursor: pointer;
+  transition: background var(--duration-micro) var(--ease-editorial);
+}
+
+.approval-card__btn--approve {
+  background: var(--charcoal);
+  color: var(--cream);
+}
+
+.approval-card__btn--approve:hover {
+  background: var(--charcoal-light);
+}
+
+.approval-card__btn--deny {
+  background: var(--white);
+  color: var(--destructive);
+  border: 1px solid var(--destructive);
+}
+
+.approval-card__btn--deny:hover {
+  background: var(--destructive);
+  color: var(--white);
+}
+
+.approval-card__btn--approve-all {
+  background: var(--gold);
+  color: var(--charcoal);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.approval-card__btn--approve-all:hover {
+  background: var(--gold-dark);
+}
+
+/* --------------------------- Approve-all pill ----------------------------- */
+/* Thin status row above the composer. Matches the muted, single-line tone
+   of the tool lines — neither chrome nor bright pill. */
+
+.approve-all-pill {
+  margin: var(--sp-1) var(--sp-3) 0;
+  padding: 4px var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-overline);
+  font-weight: 400;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.approve-all-pill__off {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-overline);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+  text-decoration: underline;
+  text-decoration-color: var(--border-divider);
+  text-underline-offset: 2px;
+  transition: color var(--duration-micro) var(--ease-editorial);
+}
+
+.approve-all-pill__off:hover {
+  color: var(--charcoal);
+  text-decoration-color: currentColor;
+}
+
+/* ------------------------- Vision-not-supported warn ---------------------- */
+
+.chat-panel__warning {
+  margin: var(--sp-2) var(--sp-4) 0;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+  background: var(--gold-badge-bg);
+  border: 1px solid var(--gold-badge-border);
+  border-radius: var(--r-lg);
+}
+
+.chat-panel__warning code {
+  background: var(--cream-dark);
+  padding: 1px 4px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--charcoal);
+}
+
+/* --------------------------- System notice card --------------------------- */
+/* Inline card for slash-command output (/help, /cost, mode-switch
+   confirmations). Styled as platform info, distinct from agent speech. */
+
+.system-notice {
+  align-self: stretch;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-base);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+.system-notice__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.system-notice__icon {
+  display: inline-block;
+  width: 1.25em;
+  text-align: center;
+}
+
+.system-notice__body {
+  margin: var(--sp-1) 0 0 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-body);
+}
+
+/* ----------------------------- ChangeCard --------------------------------- */
+
+.change-card {
+  align-self: stretch;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-base);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+.change-card.is-reverted {
+  background: var(--cream-dark);
+  border-left-color: var(--border-card);
+  color: var(--text-muted);
+}
+
+.change-card.is-error {
+  border-left-color: var(--charcoal);
+}
+
+.change-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  /* Prevent the row from wrapping when narrow — the title ellipsizes and
+     details live in the hover title attribute instead. */
+  flex-wrap: nowrap;
+}
+
+.change-card__icon {
+  display: inline-block;
+  width: 1.25em;
+  text-align: center;
+  color: var(--gold-text);
+  flex-shrink: 0;
+}
+
+.change-card.is-reverted .change-card__icon {
+  color: var(--text-muted);
+}
+
+.change-card__title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--charcoal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change-card.is-reverted .change-card__title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.change-card__badge {
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.change-card__badge--error {
+  background: var(--charcoal);
+  color: var(--warm-white);
+}
+
+.change-card__revert {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    color var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.change-card__revert:hover {
+  background: var(--gold-badge-bg);
+  color: var(--charcoal);
+  border-color: var(--gold-muted);
+}
+
+.change-card__hint {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+.change-card__error {
+  margin-top: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  border-radius: var(--r-sm);
+  color: var(--text-body);
+  white-space: pre-wrap;
+}
+
+/* --------------------------- Ask-user card -------------------------------- */
+
+.ask-user-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--gold-dark);
+  border-radius: var(--r-base);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+/* ----------------------- Spreadsheet decision card ------------------------ */
+/* Shown when the user drops an Excel file. Same visual language as the
+   ask-user / approval cards: warm surface, gold left-rule, two stacked
+   option buttons (primary gold, secondary quiet). Lives above the
+   composer textarea. */
+
+.sheet-decision {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--gold-dark);
+  border-radius: var(--r-base);
+  font-family: var(--font-sans);
+}
+
+.sheet-decision__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sheet-decision__icon {
+  flex-shrink: 0;
+}
+
+.sheet-decision__title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--charcoal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.sheet-decision__meta {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sheet-decision__dismiss {
+  margin-left: auto;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--fs-caption);
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.sheet-decision__dismiss:hover:not(:disabled) {
+  color: var(--charcoal);
+}
+
+.sheet-decision__prompt {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+.sheet-decision__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.sheet-decision__option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  background: var(--warm-white);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-micro) var(--ease-editorial),
+    background var(--duration-micro) var(--ease-editorial);
+}
+
+.sheet-decision__option:hover:not(:disabled) {
+  border-color: var(--gold-muted);
+}
+
+.sheet-decision__option--primary {
+  border-color: var(--gold-dark);
+  background: var(--gold-badge-bg);
+}
+
+.sheet-decision__option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sheet-decision__option-label {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.sheet-decision__option-hint {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-snug);
+}
+
+.sheet-decision__note {
+  margin: 0;
+  font-size: var(--fs-overline);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.ask-user-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+/* Progress dots — one per question, lit up for the current question,
+   subtly darker for already-answered ones, muted for not-yet-touched. */
+.ask-user-card__progress {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.ask-user-card__progress-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-card);
+}
+
+.ask-user-card__progress-dot.is-done {
+  background: var(--gold-muted);
+}
+
+.ask-user-card__progress-dot.is-active {
+  background: var(--gold);
+  outline: 2px solid var(--gold-badge-bg);
+}
+
+.ask-user-card__icon {
+  display: inline-block;
+  width: 1.25em;
+  text-align: center;
+}
+
+.ask-user-card__question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border-card);
+}
+
+.ask-user-card__question:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.ask-user-card__chip {
+  align-self: flex-start;
+  padding: 1px 6px;
+  background: var(--warm-white);
+  color: var(--text-muted);
+  font-size: var(--fs-overline);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: var(--r-sm);
+}
+
+.ask-user-card__prompt {
+  font-weight: 600;
+  color: var(--charcoal);
+  line-height: 1.35;
+}
+
+.ask-user-card__options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ask-user-card__option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: var(--fs-caption);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: background var(--duration-micro) var(--ease-editorial);
+}
+
+.ask-user-card__option:hover {
+  background: var(--cream-dark);
+}
+
+.ask-user-card__option.is-selected {
+  background: var(--gold-badge-bg);
+  border-color: var(--gold);
+}
+
+.ask-user-card__option-marker {
+  display: inline-block;
+  width: 1.25em;
+  flex-shrink: 0;
+}
+
+.ask-user-card__option-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.ask-user-card__option-label {
+  font-weight: 500;
+  color: var(--charcoal);
+}
+
+.ask-user-card__option-desc {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+}
+
+.ask-user-card__other {
+  margin-top: var(--sp-1);
+  padding: 6px 8px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: var(--fs-caption);
+  background: var(--warm-white);
+}
+
+.ask-user-card__other:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.ask-user-card__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-card);
+}
+
+/* Right cluster: Back + (Next | Submit). Left holds Skip. */
+.ask-user-card__nav {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.ask-user-card__skip,
+.ask-user-card__back {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-caption);
+}
+
+.ask-user-card__skip:hover,
+.ask-user-card__back:hover {
+  color: var(--charcoal);
+  border-color: var(--gold-muted);
+}
+
+.ask-user-card__next,
+.ask-user-card__submit {
+  padding: 6px 14px;
+  background: var(--gold);
+  color: var(--charcoal);
+  border: 1px solid var(--gold-dark);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.ask-user-card__next:disabled,
+.ask-user-card__submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ------------------------------ Todo card --------------------------------- */
+
+.todo-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--gold-muted);
+  border-radius: var(--r-base);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+}
+
+.todo-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-weight: 600;
+  color: var(--charcoal);
+  margin-bottom: var(--sp-1);
+}
+
+.todo-card__icon {
+  width: 1.25em;
+  text-align: center;
+  color: var(--gold-text);
+}
+
+.todo-card__count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+}
+
+.todo-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.todo-card__task {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: 1px 0;
+  color: var(--text-body);
+}
+
+.todo-card__task--done {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.todo-card__task--in-progress {
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.todo-card__task.is-current .todo-card__marker {
+  color: var(--gold-text);
+}
+
+.todo-card__marker {
+  display: inline-block;
+  width: 1.25em;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.todo-card__task--done .todo-card__marker {
+  color: var(--gold-text);
+}
+
+.todo-card__text {
+  flex: 1;
+  line-height: 1.35;
+}
+
+/* --------------------------- Skill proposal card -------------------------- */
+
+.skill-proposal-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-left: 3px solid var(--gold-dark);
+  border-radius: var(--r-base);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+}
+
+.skill-proposal-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--charcoal);
+}
+
+.skill-proposal-card__icon {
+  width: 1.25em;
+  text-align: center;
+}
+
+.skill-proposal-card__kind {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: var(--fs-overline);
+  letter-spacing: 0.04em;
+  color: var(--gold-text);
+}
+
+.skill-proposal-card__name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  background: var(--warm-white);
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  color: var(--charcoal);
+}
+
+.skill-proposal-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skill-proposal-card__label {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.skill-proposal-card__value {
+  color: var(--charcoal);
+  line-height: 1.4;
+}
+
+.skill-proposal-card__details {
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+  padding: var(--sp-1) var(--sp-2);
+}
+
+.skill-proposal-card__details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--charcoal);
+  user-select: none;
+}
+
+.skill-proposal-card__body {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  border-radius: var(--r-sm);
+  white-space: pre-wrap;
+  max-height: 320px;
+  overflow-y: auto;
+  color: var(--text-body);
+}
+
+.skill-proposal-card__ref-list {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skill-proposal-card__ref-list code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--charcoal);
+}
+
+.skill-proposal-card__ref-size {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+}
+
+.skill-proposal-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-card);
+}
+
+.skill-proposal-card__dismiss {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-caption);
+}
+
+.skill-proposal-card__accept {
+  padding: 6px 14px;
+  background: var(--gold);
+  color: var(--charcoal);
+  border: 1px solid var(--gold-dark);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+/* ----- selection chip (composer) -------------------------------------------
+   Live Excel selection riding along with the next message. Same visual
+   family as .attach-chip; sits in its own strip so it never competes with
+   file attachments for the row. */
+.composer__context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3) 0;
+}
+
+.selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+  padding: 3px 4px 3px var(--sp-2);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-full);
+  color: var(--text-body);
+}
+
+.selection-chip__addr {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.selection-chip__remove {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color var(--duration-micro) var(--ease-editorial);
+}
+
+.selection-chip__remove:hover {
+  color: var(--charcoal);
+}
+
+/* Selection chip echoed on a sent user bubble. */
+.bubble__selection {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----- steering queue (mid-run interjections) -------------------------------
+   Messages typed while the agent works, waiting for the next tool boundary.
+   Pinned above the composer rather than in the transcript: the transcript
+   item is only created at DELIVERY so its order matches the wire order. */
+.steering-queue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-1) var(--sp-3) 0;
+}
+
+.steering-queue__pill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px var(--sp-2);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  border: 1px dashed var(--border-card);
+  border-radius: var(--r-md);
+  color: var(--text-body);
+}
+
+.steering-queue__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.steering-queue__meta {
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.steering-queue__cancel {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color var(--duration-micro) var(--ease-editorial);
+}
+
+.steering-queue__cancel:hover {
+  color: var(--charcoal);
+}
+
+/* Chat-first connect wizard (stays on Chat; no bounce to Settings). */
+
+.connect-setup__form {
+  margin-top: var(--sp-4);
+  text-align: left;
+}
+
+.connect-setup__steps {
+  margin: 0 0 var(--sp-4);
+  padding-left: 1.15em;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+}
+
+.connect-setup__steps a {
+  color: var(--gold-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.connect-setup__steps a:hover {
+  color: var(--charcoal);
+  text-decoration: underline;
+}
+
+.connect-setup__primary {
+  width: 100%;
+}
+
+.connect-setup__or {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.connect-setup__or::before,
+.connect-setup__or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-divider);
+}
+
+.connect-setup__warn {
+  margin-top: var(--sp-3);
+}
+
+.connect-setup__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-4);
+}
+
+.connect-setup__actions--center {
+  justify-content: center;
+}
+
+.connect-setup__check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.connect-setup__check input {
+  margin-top: 3px;
+  accent-color: var(--gold);
+  flex-shrink: 0;
+}
+
+.connect-setup__brand {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.connect-setup__nowrap {
+  white-space: nowrap;
+}
+
+.connect-setup__field {
+  display: grid;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.connect-setup__code {
+  max-width: 12rem;
+  font-size: 1.35rem;
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+
+.connect-setup__error {
+  margin: var(--sp-3) 0 0;
+  color: var(--destructive);
+  font-size: var(--fs-caption);
+}
+
+.ask-user-card[hidden] {
+  display: none !important;
+}

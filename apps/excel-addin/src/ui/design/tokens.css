@@ -1,0 +1,266 @@
+/*
+ * AI.Edge Design Tokens
+ * --------------------
+ * Single source of truth for color, typography, spacing, radius, and shadows.
+ * Components reference these via CSS custom properties — never literal hex
+ * values. Drawn from the aiedge-brand-guide skill (v1.0, April 2026).
+ */
+
+:root {
+  /* ------------------------------- Colors -------------------------------- */
+  /* Primary palette */
+  --cream: #f5f0e8;
+  --cream-dark: #ede8dc;
+  --warm-white: #faf8f5;
+  --charcoal: #1a1a1a;
+  --charcoal-light: #333333;
+  --gold: #c9a96e;
+  --gold-dark: #b8963d;
+  --gold-muted: #78634a; /* 4.66:1 worst-case; was #8b7355 at 3.67:1 */
+  /*
+   * Text-safe gold. `--gold` (2.11:1) and `--gold-dark` (2.30:1) are brand
+   * accents chosen for fills, borders, and rules, where the 3:1 graphical
+   * bar applies — but they were also being used for actual words, which
+   * needs 4.5:1. Rather than darken the brand accent everywhere and change
+   * how every gold border and badge looks, gold TEXT gets its own token.
+   * Use this whenever gold is the `color:` of something readable; keep
+   * `--gold`/`--gold-dark` for decoration.
+   */
+  --gold-text: #7d662a; /* 4.51:1 on cream-dark */
+  --white: #ffffff;
+
+  /* Gold badge system */
+  --gold-badge-bg: rgba(201, 169, 110, 0.15);
+  --gold-badge-border: rgba(201, 169, 110, 0.4);
+  --gold-badge-text: #7a6530;
+
+  /* Text */
+  /*
+   * Text colors are held to WCAG 2.1 AA (4.5:1 for normal text), measured
+   * against `--cream-dark` (#ede8dc) — the darkest surface any of them sit
+   * on, so a token that passes there passes on cream and warm-white too.
+   *
+   * `--text-muted` previously shipped as #9b9080, which is 2.57:1 on
+   * cream-dark and fails AA on every background in the palette. It is the
+   * single most-used color in the UI (95 `color:` declarations — timestamps,
+   * helper text, tool subtitles, empty states), so this was the widest
+   * accessibility defect in the product and a certification blocker.
+   */
+  --text-muted: #6e6557; /* 4.69:1 worst-case */
+  --text-body: #4a4035; /* 8.42:1 */
+  --text-muted-hover: #6b6155; /* 5.02:1 */
+
+  /* Borders */
+  --border-light: #e0d9cc;
+  --border-divider: #d4cdc0;
+  --border-card: #e0dbd3;
+  --border-inner: #ebe6dd;
+
+  /* Functional */
+  /*
+   * Error and success text carry meaning, so they are held to the same
+   * 4.5:1 bar rather than the 3:1 allowed for purely graphical elements —
+   * these tokens are used as `color:` (19 and 9 declarations) far more than
+   * as borders or fills.
+   */
+  --destructive: #c91c22; /* 4.68:1 worst-case; was #e5484d at 3.20:1 */
+  --destructive-hover: #b0171c;
+  --success: #2b752f; /* 4.66:1 worst-case; was #2e7d32 at 4.19:1 */
+  --success-bg: #ecf5ec;
+  --warn: var(--gold-muted);
+
+  /* ----------------------------- Typography ------------------------------ */
+  --font-serif: "DM Serif Display", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Type scale (matches brand guide) */
+  --fs-display: 2.75rem; /* 44px */
+  --fs-h1: 2.25rem; /*       36px */
+  --fs-h2: 1.5rem; /*        24px */
+  --fs-body: 0.9375rem; /*   15px */
+  --fs-small: 0.8125rem; /*  13px */
+  --fs-caption: 0.75rem; /*  12px */
+  --fs-overline: 0.6875rem; /* 11px */
+
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.7;
+
+  --tracking-overline: 0.12em;
+  --tracking-button: 0.03em;
+
+  /* ------------------------------ Spacing -------------------------------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* ------------------------------ Radius --------------------------------- */
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-base: 6px;
+  --r-lg: 8px;
+  --r-xl: 12px;
+  --r-full: 9999px;
+
+  /* ------------------------------ Shadows -------------------------------- */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-deep: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.1);
+
+  /* ------------------------------ Motion --------------------------------- */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-micro: 150ms;
+  --duration-entrance: 600ms;
+}
+
+/* ============================ Base typography ============================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--cream);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+  font-feature-settings: "ss01", "kern";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  color: var(--charcoal);
+  margin: 0;
+  line-height: var(--lh-tight);
+  font-weight: 400;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-snug);
+}
+
+p {
+  margin: 0;
+  line-height: var(--lh-relaxed);
+}
+
+em.accent {
+  font-style: italic;
+  color: var(--gold-muted);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 1px 5px;
+  background: var(--cream-dark);
+  border-radius: var(--r-sm);
+  color: var(--charcoal);
+}
+
+/* Overline / label utility */
+.overline {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--fs-overline);
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/*
+ * Visually hidden, still announced. For text that gives assistive tech
+ * structure or context the visual design conveys some other way — the page
+ * <h1>, status words behind a glyph. Not `display:none`, which would remove
+ * it from the accessibility tree too.
+ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Editorial 1px line separator */
+.divider {
+  height: 1px;
+  background: var(--border-divider);
+  border: 0;
+  margin: 0;
+}
+
+/* Native scrollbar tuned for cream */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-divider);
+  border-radius: var(--r-full);
+  border: 2px solid var(--cream);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-muted);
+}
+
+/*
+ * Focus rings — gold accent, never blue.
+ *
+ * Uses `--gold-text`, not `--gold`. A focus indicator is a UI component and
+ * WCAG 1.4.11 asks for 3:1 against the adjacent background; `--gold`
+ * (#c9a96e) is 1.83:1 on cream-dark, so the ring was nearly invisible
+ * against the surfaces it appears on — keyboard users could not tell where
+ * focus was, which is the single thing focus styling exists to convey.
+ * `--gold-text` keeps the brand hue at 4.51:1.
+ */
+:focus-visible {
+  outline: 2px solid var(--gold-text);
+  outline-offset: 1px;
+}
+
+/* Selection — warm */
+::selection {
+  background: var(--gold-badge-bg);
+  color: var(--charcoal);
+}

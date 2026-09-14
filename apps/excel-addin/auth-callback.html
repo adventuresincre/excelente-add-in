@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Excelente — sign in</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script>
+      // Dual-purpose page for the OAuth dialog (see core/mcp/office-dialog.ts):
+      //  1. Opened with ?authorize=<url> → forward to the provider's
+      //     authorization page (https only — this is not an open redirector).
+      //  2. Re-entered as the OAuth redirect_uri with ?code&state (or
+      //     ?error) → hand the params back to the task pane via
+      //     Office.context.ui.messageParent.
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var authorize = params.get("authorize");
+        if (authorize) {
+          if (/^https:\/\//i.test(authorize)) {
+            window.location.replace(authorize);
+          } else {
+            document.addEventListener("DOMContentLoaded", function () {
+              document.body.textContent = "Refusing to open a non-https sign-in page.";
+            });
+          }
+          return;
+        }
+        var payload = JSON.stringify({
+          code: params.get("code") || undefined,
+          state: params.get("state") || undefined,
+          error: params.get("error") || undefined,
+          errorDescription: params.get("error_description") || undefined,
+        });
+        Office.onReady().then(function () {
+          if (Office.context && Office.context.ui && Office.context.ui.messageParent) {
+            Office.context.ui.messageParent(payload);
+          } else {
+            document.body.textContent =
+              "Sign-in finished — you can close this window and return to Excel.";
+          }
+        });
+      })();
+    </script>
+  </head>
+  <body style="font-family: system-ui, sans-serif; padding: 24px; color: #4a4035; background: #f5f0e8">
+    Completing sign-in…
+  </body>
+</html>

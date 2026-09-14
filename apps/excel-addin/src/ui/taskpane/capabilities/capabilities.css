@@ -1,0 +1,71 @@
+/* Capabilities tab — segmented [ Skills | Connectors ] over a single scroll
+   region. Fills .app-view exactly like the panels it replaced. */
+
+.capabilities-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--cream);
+}
+
+.capabilities-panel__tabs {
+  flex: none;
+  display: flex;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5) 0;
+  border-bottom: 1px solid var(--border-inner);
+  background: var(--cream);
+}
+
+.capabilities-panel__tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: var(--sp-2) 2px var(--sp-3);
+  margin-bottom: -1px; /* sit the active underline on the tab-row border */
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    color var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.capabilities-panel__tab:hover {
+  color: var(--charcoal);
+}
+
+.capabilities-panel__tab.is-active {
+  color: var(--charcoal);
+  border-bottom-color: var(--gold);
+}
+
+/* The single scroll container. Each panel brings its own padding (skills-panel
+   self-pads; the connectors section is padded below), so the body has none. */
+.capabilities-panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.capabilities-panel__section[hidden] {
+  display: none;
+}
+
+/* Let the inner panels flow naturally inside the body — the body owns the
+   scroll, so we drop each panel's own scroll container to avoid nesting two.
+   (.plan-view and .skills-panel both self-pad and self-scroll on their own.) */
+.capabilities-panel__body .skills-panel,
+.capabilities-panel__body .plan-view {
+  overflow: visible;
+}
+
+/* McpSection is a bare .settings-section (no .settings-panel wrapper here), so
+   supply the outer padding the wrapper would otherwise provide. */
+.capabilities-panel__section--connectors {
+  padding: var(--sp-5);
+}

@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest something new
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Open one of these before building anything substantial. It saves you
+        from writing something we have already tried, and saves us from
+        reviewing a large change cold.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: >
+        The situation, not the solution. What were you doing in Excel when you
+        wanted this?
+      placeholder: |
+        I underwrite industrial deals and every model needs the same six
+        audit checks at the end. Right now I ask for them one at a time.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: If you have a specific design, describe it. If not, say that.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the codebase
+      options:
+        - Not sure
+        - Agent loop / orchestration
+        - Excel tools
+        - Workbook context engine
+        - Skills
+        - MCP / connectors
+        - Task pane UI
+        - Build / manifest / distribution
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contributing
+    attributes:
+      label: Are you planning to build it
+      options:
+        - label: I would like to implement this myself
+        - label: I have read CONTRIBUTING.md

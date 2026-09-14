@@ -1,0 +1,1100 @@
+/*
+ * Settings surface. Tokens from /src/ui/design/tokens.css.
+ */
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-5);
+  background: var(--cream);
+  overflow-y: auto;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Sub-heading treatment: the quiet uppercase overline. This is the DEFAULT,
+   so anything nested (the Advanced roles, Reasoning, pace) gets it for
+   free; the panel-level override below promotes the few real headings. */
+.settings-section__title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Top-level headings — OpenRouter API key, A.CRE Free, Primary model,
+   Advanced, About — read as section titles rather than as field labels.
+   Every heading in the panel used the identical overline style, so
+   "Advanced" was indistinguishable from "Subagent model" sitting inside
+   it and the panel had no visible hierarchy at all.
+
+   Selected by position (direct child of the panel) rather than by a
+   modifier class: the nesting already encodes the hierarchy, and a class
+   would have to be threaded through ModelsSection's shared markup, which
+   renders at BOTH levels. */
+.settings-panel > .settings-section > .settings-section__title,
+.settings-advanced-toggle {
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--charcoal);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-card);
+}
+
+/* Inline capability warning under a picker — louder than a hint, quieter
+   than an error, because nothing is broken: the harness routes around it. */
+.settings-section__alert {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--cream-dark);
+  border-left: 3px solid var(--gold-dark);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-relaxed);
+  color: var(--text-body);
+}
+
+.settings-section__hint {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* ------------------------------ Agent pace -------------------------------- */
+/* Three-way segmented control for "how long the agent works before
+   pausing". Plain-language presets; the underlying turn count is never
+   surfaced to the user. */
+
+.pace-options {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.pace-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2);
+  text-align: left;
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  background: var(--warm-white);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-micro) var(--ease-editorial),
+    background var(--duration-micro) var(--ease-editorial);
+}
+
+.pace-option:hover:not(:disabled) {
+  border-color: var(--gold-muted);
+}
+
+.pace-option.is-active {
+  border-color: var(--gold);
+  background: var(--gold-badge-bg);
+}
+
+.pace-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pace-option__label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.pace-option__hint {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-snug);
+}
+
+/* ------------------------------ Api key field ----------------------------- */
+
+.api-key-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.api-key-field__stored {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-caption);
+}
+
+.api-key-field__label {
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.api-key-field__mask {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--charcoal);
+}
+
+.api-key-field__hint {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.api-key-field__hint a {
+  color: var(--gold-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.api-key-field__hint a:hover {
+  color: var(--charcoal);
+  text-decoration: underline;
+}
+
+.api-key-field__editor {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.api-key-field__input {
+  flex: 1;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--white);
+  color: var(--charcoal);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  transition: border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.api-key-field__input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-badge-bg);
+}
+
+.api-key-field__error {
+  font-size: var(--fs-caption);
+  color: var(--destructive);
+}
+
+.api-key-field__saved {
+  font-size: var(--fs-caption);
+  color: var(--success);
+  font-weight: 500;
+}
+
+/* ----------------------------- Model picker ------------------------------- */
+
+.model-picker {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--white);
+  color: var(--charcoal);
+  transition: border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.model-picker:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-badge-bg);
+}
+
+.model-picker--loading,
+.model-picker--empty {
+  color: var(--text-muted);
+  background: var(--warm-white);
+  font-style: italic;
+}
+
+.model-picker--error {
+  color: var(--destructive);
+  background: var(--white);
+  border-color: var(--destructive);
+}
+
+/* ---------------------------- Reasoning slider ---------------------------- */
+
+.reasoning-slider {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--warm-white);
+  overflow: hidden;
+  padding: 3px;
+}
+
+.reasoning-slider__btn {
+  flex: 1;
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-base);
+  background: transparent;
+  padding: 6px 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-button);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    color var(--duration-micro) var(--ease-editorial);
+}
+
+.reasoning-slider__btn:hover:not(:disabled) {
+  color: var(--charcoal);
+}
+
+.reasoning-slider__btn.is-active {
+  background: var(--charcoal);
+  color: var(--cream);
+}
+
+.reasoning-slider__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --------------------------- Model details card --------------------------- */
+/* What a <select> option cannot say about the chosen model. Sits directly
+   under each picker; relative bar + rank are against that picker's list. */
+
+.model-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--warm-white);
+  font-size: var(--fs-small);
+}
+
+.model-card__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.model-card__lab {
+  font-size: var(--fs-overline);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.model-card__name {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  color: var(--charcoal);
+}
+
+.model-card__score {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.model-card__score-label {
+  font-size: var(--fs-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.model-card__score-value {
+  font-size: 1.125rem;
+  color: var(--charcoal);
+}
+
+.model-card__bar,
+.model-row__bar {
+  display: inline-block;
+  flex: 1 1 60px;
+  min-width: 60px;
+  max-width: 140px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--cream-dark);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.model-card__bar-fill,
+.model-row__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gold);
+}
+
+.model-card__rank,
+.model-card__unranked {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.model-card__note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+.model-card__note code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  padding: 1px 4px;
+  border-radius: var(--r-sm);
+}
+
+.model-card__facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px var(--sp-3);
+  font-size: var(--fs-caption);
+}
+
+.model-card__facts > div {
+  display: contents;
+}
+
+.model-card__facts dt {
+  color: var(--text-muted);
+}
+
+.model-card__facts dd {
+  margin: 0;
+  color: var(--text-body);
+}
+
+.model-card__caps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+.model-card__caps li::before {
+  content: "✓";
+  display: inline-block;
+  width: 1.1em;
+  color: var(--success);
+}
+
+.model-card__caps li.is-no {
+  color: var(--text-muted);
+}
+
+.model-card__caps li.is-no::before {
+  content: "–";
+  color: var(--text-muted);
+}
+
+.model-card__cap-name {
+  font-weight: 600;
+  color: var(--charcoal);
+  margin-right: 4px;
+}
+
+.model-card__caps li.is-no .model-card__cap-name {
+  color: var(--text-muted);
+}
+
+/* A button that reads as a link — "Compare all models" under each picker. */
+.settings-linklike {
+  align-self: flex-start;
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-caption);
+  color: var(--gold-text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.settings-linklike:hover {
+  color: var(--gold-dark);
+}
+
+.settings-linklike:disabled {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+/* ------------------------------ Model explorer ---------------------------- */
+/* Full-pane sheet: one flat, sortable list of every model a role can use.
+   Fixed to the viewport — the task pane IS the viewport — so it does not
+   depend on the settings scroller's positioning. */
+
+.model-explorer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+}
+
+.model-explorer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border-card);
+}
+
+.model-explorer__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--fs-h2);
+  color: var(--charcoal);
+}
+
+.model-explorer__close {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-full);
+  background: var(--white);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.model-explorer__close:hover {
+  color: var(--charcoal);
+  border-color: var(--gold-muted);
+}
+
+.model-explorer__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border-card);
+  font-size: var(--fs-caption);
+}
+
+.model-explorer__sort {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-muted);
+}
+
+.model-explorer__sort select {
+  font: inherit;
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-md);
+  background: var(--white);
+  color: var(--charcoal);
+}
+
+.model-explorer__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  color: var(--text-body);
+}
+
+.model-explorer__filters label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.model-explorer__legend {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-5);
+  font-size: var(--fs-overline);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+.model-explorer__list {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--sp-5) var(--sp-5);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.model-explorer__empty {
+  padding: var(--sp-3) 0;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+.model-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--white);
+  color: var(--charcoal);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.model-row:hover {
+  border-color: var(--gold-muted);
+}
+
+.model-row.is-selected {
+  border-color: var(--gold);
+  background: var(--gold-badge-bg);
+}
+
+.model-row__top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.model-row__name {
+  font-size: var(--fs-small);
+  font-weight: 600;
+}
+
+.model-row__lab {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.model-row__badge,
+.model-row__cap {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  background: var(--cream-dark);
+  color: var(--text-muted);
+}
+
+.model-row__badge {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.model-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+.model-row__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 96px;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.model-row__unranked {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.model-row__caps {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* ----------------------------------- About -------------------------------- */
+/* Moved here from the app footer in the slim-header redesign. Single
+   attribution block at the bottom of Settings. */
+
+.settings-section--about {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-divider);
+}
+
+.settings-about {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+}
+
+.settings-about__brand {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  color: var(--charcoal);
+  letter-spacing: -0.01em;
+}
+
+.settings-about__tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  background: var(--cream-dark);
+  border-radius: var(--r-sm);
+  vertical-align: middle;
+  margin-left: var(--sp-1);
+}
+
+.settings-about__link {
+  color: var(--gold-muted);
+  text-decoration: none;
+  transition: color var(--duration-micro) var(--ease-editorial);
+}
+
+.settings-about__link:hover {
+  color: var(--gold-text);
+  text-decoration: underline;
+}
+
+.settings-about__copy {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+}
+
+/* ----------------------------- MCP section -------------------------------- */
+
+.settings-inline-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  background: var(--cream-dark);
+  padding: 1px 4px;
+  border-radius: var(--r-sm);
+}
+
+.mcp-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.mcp-add-form__row {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.mcp-add-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.mcp-add-form__field--url {
+  flex: 2;
+}
+
+.mcp-add-form__label {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mcp-add-form__input {
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-sm);
+  background: var(--warm-white);
+  color: var(--charcoal);
+}
+
+.mcp-add-form__input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.mcp-add-form__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mcp-add-form__submit {
+  padding: 6px 14px;
+  background: var(--gold);
+  color: var(--charcoal);
+  border: 1px solid var(--gold-dark);
+  border-radius: var(--r-sm);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mcp-add-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mcp-add-form__error {
+  font-size: var(--fs-overline);
+  color: var(--charcoal);
+}
+
+.mcp-server-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.mcp-server-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  overflow: hidden;
+}
+
+.mcp-server-row--error {
+  border-left: 3px solid var(--charcoal);
+}
+
+.mcp-server-row--connected {
+  border-left: 3px solid var(--gold);
+}
+
+/* Left-edge "load into the agent" toggle. Checked = the connector's tools are
+   exposed to the agent (persisted; auto-on after a successful Connect). */
+.mcp-server-row__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--sp-2);
+  border-right: 1px solid var(--border-card);
+  cursor: pointer;
+}
+
+.mcp-server-row__toggle input {
+  cursor: pointer;
+  accent-color: var(--gold);
+  margin: 0;
+}
+
+.mcp-server-row.is-active {
+  background: var(--gold-badge-bg);
+}
+
+.mcp-server-row__main {
+  flex: 1;
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mcp-server-row__name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.mcp-server-row__url {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.mcp-server-row__status {
+  margin-top: 2px;
+}
+
+.mcp-status {
+  font-size: var(--fs-overline);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mcp-status--connecting {
+  color: var(--text-muted);
+}
+
+.mcp-status--connected {
+  color: var(--gold-text);
+}
+
+.mcp-status--error {
+  color: var(--charcoal);
+  font-weight: 600;
+}
+
+.mcp-server-row__remove {
+  padding: 0 var(--sp-2);
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--fs-body);
+}
+
+.mcp-server-row__remove:hover {
+  background: var(--charcoal);
+  color: var(--warm-white);
+}
+
+/* One-click A.CRE MCP presets */
+
+.mcp-presets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.mcp-preset-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  background: var(--warm-white);
+  border: 1px solid var(--gold-badge-border);
+  border-radius: var(--r-base);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.mcp-preset-row__top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.mcp-preset-row__url-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  border-top: 1px solid var(--border-inner);
+  padding-top: var(--sp-2);
+}
+
+.mcp-preset-row__help {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-snug);
+}
+
+.mcp-preset-row__link {
+  color: var(--gold-muted);
+}
+
+.mcp-preset-row__url-controls {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.mcp-preset-row__url-controls .mcp-add-form__input {
+  flex: 1;
+}
+
+.mcp-preset-row__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mcp-preset-row__label {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.mcp-preset-row__desc {
+  font-size: var(--fs-overline);
+  color: var(--text-muted);
+  line-height: var(--lh-snug);
+}
+
+.mcp-preset-row__error {
+  font-size: var(--fs-overline);
+  color: var(--destructive);
+}
+
+.mcp-preset-row__connect {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  background: var(--gold);
+  color: var(--charcoal);
+  border: 1px solid var(--gold-dark);
+  border-radius: var(--r-sm);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mcp-preset-row__connect:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.settings-about__version {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+/* Shown only when the served build id differs from this bundle's — i.e. the
+   pane is running cached code. Deliberately quiet: it is informational, not
+   an error the user caused. */
+.settings-about__update {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2);
+  font-size: var(--fs-overline);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+  background: var(--cream-dark);
+  border-radius: var(--r-sm);
+}
+
+.settings-about__update code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.settings-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* The gap between Advanced's sections lives here, NOT on the <details>.
+   Chromium wraps non-summary children in a `::details-content` box, so a
+   gap on the <details> never reached them and every heading sat flush
+   against the control above it. */
+.settings-advanced__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.settings-advanced-toggle {
+  appearance: none;
+  list-style: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settings-advanced-toggle::-webkit-details-marker {
+  display: none;
+}
+
+/* The serif treatment above makes this read as a heading, so it needs its
+   own affordance back. Rotates in place when the section opens. */
+.settings-advanced-toggle::after {
+  content: "▸";
+  float: right;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.settings-advanced[open] > .settings-advanced-toggle::after {
+  content: "▾";
+}
+
+/* Development-instance marker. Loud on purpose: a tester who cannot tell
+   which instance they are in will report a bug against the wrong one, and
+   the whole value of a staging environment is knowing what you tested.
+   Driven by version.json at runtime, so the bundle stays byte-identical
+   between dev and production. */
+.settings-about__env {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #b45309;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  vertical-align: middle;
+}
+
+/* Rank badge in an explorer row: the same "#2" the picker option shows. */
+.model-row__rank {
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-right: 2px;
+}

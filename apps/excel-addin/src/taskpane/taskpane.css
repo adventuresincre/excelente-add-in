@@ -1,0 +1,403 @@
+/*
+ * App-shell layout. All color / typography tokens come from
+ * /src/ui/design/tokens.css (loaded by taskpane.html before this file).
+ */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--cream);
+}
+
+.app__loading {
+  margin: auto;
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+}
+
+/* --------------------------------- Header --------------------------------- */
+
+/* Slim, single-row header. Excel's own task-pane title bar already shows
+   the Excelente brand, so we don't repeat the wordmark in-app — tabs +
+   a session-info popover only. Saves ~80px of vertical real estate. */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--cream);
+  border-bottom: 1px solid var(--border-divider);
+  min-height: 36px;
+}
+
+.app-header__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.app-header__nav::-webkit-scrollbar {
+  display: none;
+}
+
+.app-header__tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: var(--tracking-button);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--duration-micro) var(--ease-editorial);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.app-header__tab:hover {
+  color: var(--charcoal);
+}
+
+.app-header__tab.is-active {
+  color: var(--charcoal);
+  border-bottom-color: var(--gold);
+}
+
+/* ------------------------------ Info popover ----------------------------- */
+/* Native <details> for zero state management. Shows session cost when > 0
+   in the summary so users get an at-a-glance burn rate; click for the full
+   meta panel (model, reasoning, cost, version, reset). */
+
+.app-header__info {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* "+" button — start a new chat. Pinned to the right edge of the header,
+   a fixed gap to the left of the info pill, regardless of sidebar width.
+   `margin-left: auto` absorbs the leftover horizontal space so the nav
+   keeps its natural width on the left and the +/info pair stays anchored
+   on the right. Click resets the current conversation (auto-saved to
+   History on its last send, so nothing is lost) and routes to Chat. */
+.app-header__new {
+  appearance: none;
+  border: 1px solid var(--border-card);
+  background: var(--warm-white);
+  color: var(--charcoal);
+  border-radius: var(--r-full);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: var(--sp-1);
+  flex-shrink: 0;
+  transition:
+    background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.app-header__new:hover {
+  background: var(--cream-dark);
+  border-color: var(--gold-muted);
+}
+
+.app-header__info-summary {
+  list-style: none;
+  cursor: pointer;
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-full);
+  padding: 2px 10px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  font-weight: 500;
+  color: var(--charcoal);
+  background: var(--warm-white);
+  transition: background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.app-header__info-summary::-webkit-details-marker {
+  display: none;
+}
+
+.app-header__info-summary:hover {
+  background: var(--cream-dark);
+  border-color: var(--gold-muted);
+}
+
+.app-header__info[open] .app-header__info-summary {
+  border-color: var(--gold);
+}
+
+.app-header__info-popover {
+  position: absolute;
+  top: calc(100% + var(--sp-1));
+  right: 0;
+  z-index: 30;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-elevated);
+}
+
+.app-header__info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.app-header__info-label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-header__info-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  color: var(--charcoal);
+  text-align: right;
+}
+
+/* Per-model cache breakdown — small section inside the popover that
+   appears only when multiple models have been called this session. */
+.app-header__info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--sp-1);
+  padding-top: var(--sp-1);
+  border-top: 1px solid var(--border-card);
+}
+
+.app-header__info-section-label {
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: var(--tracking-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.app-header__info-row--small .app-header__info-label,
+.app-header__info-row--small .app-header__info-value {
+  font-size: calc(var(--fs-overline) - 1px);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 500;
+}
+
+.app-header__info-row--small .app-header__info-label {
+  color: var(--charcoal);
+  /* Tighten the label so long model ids don't push the value off-screen. */
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header__info-value--reasoning {
+  text-transform: capitalize;
+}
+
+.app-header__info-value--cost {
+  font-weight: 600;
+}
+
+.app-header__info-value em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--gold-muted);
+}
+
+/* Footnote for the asterisk on SESSION COST. Ruled off the rows above so it
+   reads as an annotation rather than another row, and left in sentence case
+   — every other line in this popover is a label, this one is a sentence. */
+.app-header__info-note {
+  margin: 0;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-card);
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  line-height: var(--lh-relaxed);
+  color: var(--text-muted);
+  /* The popover is min-width 220px and sized by its widest row; without a
+     ceiling this sentence would stretch it across the whole pane. */
+  max-width: 240px;
+}
+
+.app-header__info-reset {
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  padding: 4px var(--sp-2);
+  background: var(--white);
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: var(--tracking-button);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-top: var(--sp-1);
+  transition: color var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.app-header__info-reset:hover {
+  color: var(--destructive);
+  border-color: var(--destructive);
+}
+
+/* ---------------------------------- Body ---------------------------------- */
+
+.app-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  position: relative;
+}
+
+.app-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-view[hidden] {
+  display: none;
+}
+
+/* ------------------------------- Buttons (shared) ------------------------- */
+
+.btn-primary {
+  appearance: none;
+  border: 0;
+  border-radius: var(--r-base);
+  padding: 10px 20px;
+  background: var(--charcoal);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  letter-spacing: var(--tracking-button);
+  cursor: pointer;
+  transition: background var(--duration-micro) var(--ease-editorial);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--charcoal-light);
+}
+
+.btn-primary:disabled {
+  background: var(--text-muted);
+  color: var(--cream);
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  appearance: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  padding: 6px var(--sp-3);
+  background: var(--white);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--duration-micro) var(--ease-editorial),
+    border-color var(--duration-micro) var(--ease-editorial);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--cream-dark);
+  border-color: var(--gold-muted);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Shown at /taskpane.html when a browser opens it on a deployed origin —
+   see src/taskpane/boot-target.ts. Rendered as plain HTML by main.tsx
+   without mounting React, so it must stand on its own: tokens.css and this
+   file are <link>ed by taskpane.html and are loaded before any script runs. */
+.outside-excel {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 12vh var(--sp-6) var(--sp-6);
+  text-align: center;
+  font-family: var(--font-sans);
+  color: var(--text-body);
+}
+
+.outside-excel__mark {
+  display: block;
+  margin: 0 auto var(--sp-5);
+}
+
+.outside-excel__title {
+  margin: 0 0 var(--sp-4);
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  line-height: var(--lh-tight);
+  color: var(--charcoal);
+}
+
+.outside-excel__body {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+}
+
+.outside-excel__link {
+  color: var(--gold-text);
+  font-weight: 600;
+}
+
+.outside-excel__note {
+  margin: var(--sp-6) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}

@@ -1,0 +1,79 @@
+{
+  "name": "excelente-excel-addin",
+  "version": "0.4.2",
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "CRE Edge, LLC (https://aiedge.ac)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adventuresincre/excelente-add-in.git"
+  },
+  "config": {
+    "app_to_debug": "excel",
+    "app_type_to_debug": "desktop",
+    "dev_server_port": 3000
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev-server": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "manifest:dev": "node scripts/build-manifest.mjs",
+    "manifest:prod": "node scripts/build-manifest.mjs --out dist/manifest.xml",
+    "build:version": "node scripts/build-version.mjs",
+    "preview": "vite preview --port 3000",
+    "watch": "vite build --watch",
+    "start": "office-addin-debugging start manifest.xml",
+    "stop": "office-addin-debugging stop manifest.xml",
+    "validate": "office-addin-manifest validate manifest.xml",
+    "lint": "office-addin-lint check",
+    "lint:fix": "office-addin-lint fix",
+    "prettier": "office-addin-lint prettier",
+    "signin": "office-addin-dev-settings m365-account login",
+    "signout": "office-addin-dev-settings m365-account logout",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.469.0",
+    "pdfjs-dist": "^4.9.155",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@types/office-js": "^1.0.377",
+    "@types/office-runtime": "^1.0.35",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint-plugin-office-addins": "^4.0.3",
+    "marked": "^18.0.5",
+    "office-addin-cli": "^2.0.3",
+    "office-addin-debugging": "^6.0.3",
+    "office-addin-dev-certs": "^2.0.3",
+    "office-addin-lint": "^3.0.3",
+    "office-addin-manifest": "^2.0.3",
+    "office-addin-prettier-config": "^2.0.1",
+    "sharp": "^0.34.5",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.3",
+    "vitest": "^2.1.8"
+  },
+  "prettier": "office-addin-prettier-config",
+  "browserslist": [
+    "last 2 chrome versions",
+    "last 2 edge versions",
+    "last 2 firefox versions",
+    "last 2 safari versions"
+  ],
+  "description": "AI-first Excel add-in for financial modeling. Bring your own model, full workbook context, agentic tool use.",
+  "homepage": "https://excelente.aiedge.ac",
+  "bugs": {
+    "url": "https://github.com/adventuresincre/excelente-add-in/issues"
+  }
+}
