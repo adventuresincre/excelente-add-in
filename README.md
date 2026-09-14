@@ -60,6 +60,10 @@ Our hosted version of Excelente is free to use. Add your own OpenRouter key and 
 
 This repository is for people who want to read the code, change it, run their own build, or contribute a fix.
 
+## Why OpenRouter
+
+We started with OpenRouter because we have used it ourselves for the past few years: it serves hundreds of models, technical and non-technical people alike find it easy to work with, and you can put spending limits and model restrictions on a key so the budget stays under your control. Its recent acquisition by Stripe also raises the odds that it is a long-term piece of the stack. We plan to add other routers over time, and eventually locally installed models, though so far the models that run locally have not been capable enough for this kind of work.
+
 ## Running It Yourself
 
 You need Node 22 or newer, Excel with the `ExcelApi 1.9` requirement set (Microsoft 365 on Windows or Mac, or Excel on the web), and an [OpenRouter API key](https://openrouter.ai/keys).
