@@ -42,7 +42,7 @@ build, or contribute a fix.
 
 ## Running it yourself
 
-You need Node 20 or newer, Excel with the `ExcelApi 1.9` requirement set (Microsoft
+You need Node 22 or newer, Excel with the `ExcelApi 1.9` requirement set (Microsoft
 365 on Windows or Mac, or Excel on the web), and an
 [OpenRouter API key](https://openrouter.ai/keys).
 
