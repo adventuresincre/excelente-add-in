@@ -6,6 +6,18 @@
 
 ---
 
+## Why We Built Excelente
+
+At A.CRE we've been teaching CRE professionals the technical skills that matter since 2015. Our flagship A.CRE Accelerator teaches real estate financial modeling while our AI.Edge teaches AI proficiency. Both are built for people who work in CRE, and as the industry enters the AI era, being AI-native has become increasingly important, whether the task is underwriting a deal or building a quarterly report for investors. Watching the AI tech stack take shape has taught us one thing above the rest: the harness matters as much as the model. The harness is the environment that makes the AI model capable of producing work that one can actually use. It determines what tools the model can reach, what knowledge and data flow in, and how the output lands in the file.
+
+We went looking for a harness in Excel to teach with. Every option was proprietary, limited which models it would talk to, and didn't have the CRE-specific capabilities to be useful for our industry. We wanted our students in an open-source environment where they control the harness, the model, and the capabilities plugged into it. We also needed it to run at low or no cost, because many students cannot pay for inference on top of tuition.
+
+Nothing met both requirements, so we built Excelente.
+
+It's initially released as an optional component of our real estate financial modeling training and AI.Edge programs. Over time we expect it to become central to how students learn where their own judgment belongs in a model and where AI can carry the work.
+
+---
+
 Most AI tools for Excel hand you a chat box that writes a formula you then paste
 somewhere. Excelente is built the other way around. It reads the workbook that is
 actually open in front of you (every sheet, the formulas, the named ranges, the
