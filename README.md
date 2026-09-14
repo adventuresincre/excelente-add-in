@@ -41,7 +41,7 @@ We built it to teach CRE, so the modeling conventions are CRE conventions and th
 **The capabilities.** Three kinds are included:
 
 - *Skills* consistent with the Agent Skill standard. A skill is a folder with a `SKILL.md`, in the same format as Open Agent Skills. Drop one into the skills directory and the agent can find it and load it. The bundled ones are worth reading as examples of how we encode a method.
-- *MCP servers* bring in outside tools and data. Add any server that speaks the protocol. Two presets ship because our students and clients use them: CRE Agents gives the AI access to CRE-specific tasks, skills, and datasets while the A.CRE Intelligence Hub serves primary-source real estate data.
+- *MCP servers* bring in outside tools and data. Add any server that speaks the protocol. Two presets ship because our students and clients use them: [CRE Agents](https://www.creagents.com) gives the AI access to CRE-specific tasks, skills, and datasets while the A.CRE Intelligence Hub serves primary-source real estate data.
 - *Attachments* optimized for accuracy. PDFs are sent as page images rather than extracted text, because in this business a misread number is worse than a slower answer. Images and spreadsheets attach too, and a spreadsheet can be inserted into the workbook as worksheets instead.
 
 **Subagents.** The main agent can hand a focused job to a child agent and see only its summary. Four roles ship: Explore finds things, Audit hunts errors, Builder executes one write task, and Reviewer gives a second opinion. Each has its own prompt and tool allowlist, and a child cannot spawn children.
@@ -127,7 +127,7 @@ The screenshot tool deserves a mention. `Range.getImage()` renders cells without
 
 The hosted service at excelente.aiedge.ac runs from a private repository that adds the deployment tooling, the landing page, the terms and privacy pages, the marketplace submission material, and the server-side pieces that hold our own API keys.
 
-Nine of the bundled CRE skills are also absent. They incorporate methodology licensed to us by CRE Agents, Inc. under terms that cover use of the add-in but not redistribution, so we cannot put them here. The skill loader globs whatever is present, so nothing breaks. See [apps/excel-addin/skills/LICENSE.md](apps/excel-addin/skills/LICENSE.md).
+Nine of the bundled CRE skills are also absent. They incorporate methodology licensed to us by [CRE Agents, Inc.](https://www.creagents.com) under terms that cover use of the add-in but not redistribution, so we cannot put them here. The skill loader globs whatever is present, so nothing breaks. See [apps/excel-addin/skills/LICENSE.md](apps/excel-addin/skills/LICENSE.md).
 
 What is here is the add-in: the whole harness, the agent, the Excel tool layer, the UI, and the five method skills that are wholly ours.
 
