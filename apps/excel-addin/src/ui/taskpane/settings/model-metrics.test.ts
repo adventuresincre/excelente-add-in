@@ -104,9 +104,9 @@ describe("rank, bar and value", () => {
     expect(relativeCapability([astra], unranked)).toBeNull();
   });
 
-  it("uses the 3:1 blended price and treats a scored free model as infinite value", () => {
+  it("uses the 3:1 blended price, weights capability to the 4th power, and treats a scored free model as infinite value", () => {
     expect(blendedPricePerMillion(astra)).toBeCloseTo((3 * 1.25 + 10) / 4);
-    expect(valueScore(astra)).toBeCloseTo(53 / ((3 * 1.25 + 10) / 4));
+    expect(valueScore(astra)).toBeCloseTo(53 ** 4 / ((3 * 1.25 + 10) / 4));
     expect(valueScore(nemotron)).toBe(Number.POSITIVE_INFINITY);
     expect(valueScore(unranked)).toBeNull();
   });

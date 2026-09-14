@@ -57,8 +57,8 @@ describe("rankModels", () => {
     expect(ranks.byId.get(acre.id)).toBeUndefined();
   });
 
-  it("ranks value among paid scored models only — capability per blended dollar", () => {
-    // flash: 40 / 0.175 ≈ 229 per $; astra: 53 / 3.44 ≈ 15; sol/twin: 47 / 3.44 ≈ 14.
+  it("ranks value among paid scored models only — capability^4 per blended dollar", () => {
+    // flash: 40^4 / 0.175 ≈ 14.6M per $; astra: 53^4 / 3.44 ≈ 2.3M; sol/twin: 47^4 / 3.44 ≈ 1.4M.
     expect(ranks.byId.get(flash.id)?.value).toBe(1);
     expect(ranks.byId.get(astra.id)?.value).toBe(2);
     expect(ranks.byId.get(sol.id)?.value).toBe(3);

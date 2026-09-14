@@ -100,14 +100,29 @@ export function relativeCapability(models: readonly ModelInfo[], m: ModelInfo): 
 }
 
 /**
- * Capability per dollar of blended price. Infinity for a scored free model
- * — the best possible value — and null when unscored.
+ * How much more intelligence weighs than price in the value score. The
+ * score is capability^k / price, which in log terms is
+ * k·log(capability) − log(price): a model earns its place if being 10%
+ * smarter is worth being (1.1^k − 1) ≈ 46% more expensive. At k = 1 the
+ * Top 10 Value list filled with sub-25-index models that were merely almost
+ * free (a 9B model, Flash Lite at 8.5); k = 4 clears those, admits the
+ * strong mid-priced models (Muse Spark, Gemini Flash, Grok 4.6) and still
+ * keeps the $10–20/M frontier out, which the capability list already covers.
+ * Spencer, 2026-09-14. Only the shape matters — scaling the score by any
+ * constant changes no rank.
+ */
+export const VALUE_CAPABILITY_EXPONENT = 4;
+
+/**
+ * Capability^k per dollar of blended price, k = {@link VALUE_CAPABILITY_EXPONENT}.
+ * Infinity for a scored free model — the best possible value — and null when
+ * unscored.
  */
 export function valueScore(m: ModelInfo): number | null {
   if (m.capability === undefined) return null;
   const price = blendedPricePerMillion(m);
   if (price <= 0) return Number.POSITIVE_INFINITY;
-  return m.capability / price;
+  return m.capability ** VALUE_CAPABILITY_EXPONENT / price;
 }
 
 /**
@@ -152,7 +167,7 @@ export function compareByCapability(a: ModelInfo, b: ModelInfo): number {
 export interface ModelRanks {
   /** Dense rank by capability among scored listed models; 1 is the most capable. */
   capability?: number;
-  /** Dense rank by value (capability per blended dollar) among scored PAID listed models. */
+  /** Dense rank by value (capability^4 per blended dollar) among scored PAID listed models. */
   value?: number;
 }
 
@@ -172,7 +187,7 @@ export const EMPTY_RANKS: RankTable = { byId: new Map(), ofCapability: 0, ofValu
  * here", not a benchmark number nobody can place (2026-09-12: the raw score
  * read as noise in the dropdown). Capability rank is dense: ties share a
  * number, the next distinct score takes the next integer. Value ranks only
- * paid, scored models — a free model's capability per dollar is infinite,
+ * paid, scored models — a free model's capability^4 per dollar is infinite,
  * which says nothing about it, and the free section already labels it free.
  */
 export function rankModels(population: readonly ModelInfo[]): RankTable {

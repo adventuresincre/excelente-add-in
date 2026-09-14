@@ -176,7 +176,7 @@ export function SettingsPanel() {
             v{APP_VERSION} · {BUILD_SHA}
           </span>
           <br />
-          Source-available · made by{" "}
+          Open source · made by{" "}
           <a
             href="https://www.aiedge.ac"
             target="_blank"
@@ -203,8 +203,8 @@ export function SettingsPanel() {
           </p>
         )}
         <p className="settings-about__copy">
-          Copyright © 2025–2026 CRE Edge, LLC. Licensed under PolyForm Perimeter 1.0.1 — commercial
-          use OK; building a competing product is not.
+          Copyright © 2025–2026 CRE Edge, LLC. Licensed under Apache 2.0. The name, logo, and
+          bundled Skills are licensed separately.
         </p>
       </section>
     </div>
