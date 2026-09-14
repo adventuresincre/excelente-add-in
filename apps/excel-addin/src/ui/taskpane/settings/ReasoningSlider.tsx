@@ -37,13 +37,13 @@ export function ReasoningSlider({ value, onChange, disabled, policy }: Reasoning
   const titleFor = (level: (typeof LEVELS)[number]) => {
     const stop = stopFor(level.value);
     if (level.value === "off") {
-      return mandatory ? "This model always reasons — it cannot be turned off" : level.description;
+      return mandatory ? "This model always reasons. It cannot be turned off" : level.description;
     }
     if (stop.sameAs) {
-      return `Same as ${labelFor(stop.sameAs)} on this model — both ask for "${stop.effort}"`;
+      return `Same as ${labelFor(stop.sameAs)} on this model, both ask for "${stop.effort}"`;
     }
     return stop.effort && stop.effort !== level.value
-      ? `${level.description} — sent as "${stop.effort}"`
+      ? `${level.description}, sent as "${stop.effort}"`
       : level.description;
   };
 
@@ -79,7 +79,7 @@ export function ReasoningSlider({ value, onChange, disabled, policy }: Reasoning
       </div>
       {mandatory && !disabled && (
         <p className="settings-section__hint">
-          This model always reasons — its provider doesn&apos;t allow it to be turned off.{" "}
+          This model always reasons. Its provider doesn&apos;t allow it to be turned off.{" "}
           <strong>Off</strong> asks for the least it will do
           {offEffort ? (
             <>

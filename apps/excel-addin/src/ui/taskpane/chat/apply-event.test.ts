@@ -37,7 +37,7 @@ describe("applyEvent — stream-retry", () => {
     const answerIdx = items.findIndex((it) => it.kind === "assistant");
     expect(items[noticeIdx]).toMatchObject({
       kind: "system",
-      title: "Provider is busy — retrying (1/5)",
+      title: "Provider is busy, retrying (1/5)",
     });
     // The notice sits above the recovered answer, where the wait happened.
     expect(noticeIdx).toBeLessThan(answerIdx);
@@ -63,7 +63,7 @@ describe("applyEvent — stream-retry", () => {
     ]);
     const notices = items.filter((it) => it.kind === "system");
     expect(notices).toHaveLength(1);
-    expect(notices[0]).toMatchObject({ title: "Provider is busy — retrying (3/5)" });
+    expect(notices[0]).toMatchObject({ title: "Provider is busy, retrying (3/5)" });
     expect(items.some((it) => it.kind === "assistant")).toBe(false);
   });
 
@@ -77,10 +77,10 @@ describe("applyEvent — stream-retry", () => {
         reason: "network",
       },
     ]);
-    expect(network[0]).toMatchObject({ title: "Connection problem — retrying (1/5)" });
+    expect(network[0]).toMatchObject({ title: "Connection problem, retrying (1/5)" });
     const provider = run([
       { type: "stream-retry", attempt: 2, maxAttempts: 5, error: "502", reason: "provider" },
     ]);
-    expect(provider[0]).toMatchObject({ title: "Provider error — retrying (2/5)" });
+    expect(provider[0]).toMatchObject({ title: "Provider error, retrying (2/5)" });
   });
 });

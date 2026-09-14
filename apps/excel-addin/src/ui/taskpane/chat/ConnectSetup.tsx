@@ -90,7 +90,7 @@ export function ConnectSetup() {
               className="btn-secondary connect-setup__primary"
               onClick={() => setAcreDisclosure(true)}
             >
-              Use {ACRE_FREE_DISPLAY_NAME} — no key, no sign-in (for a limited time)
+              Use {ACRE_FREE_DISPLAY_NAME}, no key or sign-in (for a limited time)
             </button>
             {acreDisclosure && <AcreFreeDisclosure onContinue={chooseAcreFree} />}
           </div>
@@ -153,7 +153,7 @@ export function ConnectSetup() {
             {isAcreFreeModel(picked) && (
               <p className="settings-section__hint">
                 A.CRE covers this model. Your data is not used for training. It is far less capable
-                than OpenRouter models — you can add a key in Settings anytime.
+                than OpenRouter models. You can add a key in Settings anytime.
               </p>
             )}
             {showVisionNote && (
@@ -212,7 +212,7 @@ function AcreFreeDisclosure({ onContinue }: { onContinue: () => void }) {
       </p>
       <p>
         It uses a capable, lower-cost model with limited shared usage, and it is offered for a
-        limited time — A.CRE may change or end it at any point. As soon as you&apos;re ready, we
+        limited time, and A.CRE may change or end it at any point. As soon as you&apos;re ready, we
         recommend adding your own OpenRouter key. That gives you control over which model you use,
         the quality of the model, and your usage.
       </p>

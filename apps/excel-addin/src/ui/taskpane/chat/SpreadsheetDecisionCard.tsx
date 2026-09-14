@@ -86,7 +86,7 @@ export function SpreadsheetDecisionCard({
 
       {isMacroEnabled && (
         <p className="sheet-decision__note">
-          Macros aren’t imported — only the worksheet data and formulas.
+          Macros aren’t imported, only the worksheet data and formulas.
         </p>
       )}
       {busy && <p className="sheet-decision__note">Working…</p>}

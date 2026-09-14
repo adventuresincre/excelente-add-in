@@ -66,8 +66,8 @@ function renderOutsideExcelNotice() {
         <a class="outside-excel__link" href="/">Go to the Excelente home page</a>
       </p>
       <p class="outside-excel__note">
-        Seeing this inside Excel? Close the task pane and reopen it. That
-        usually means Office scripts were slow to load.
+        If you are seeing this inside Excel, close the task pane and reopen it.
+        That usually means Office scripts were slow to load.
       </p>
     </div>`;
 }

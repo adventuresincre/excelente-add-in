@@ -24,7 +24,7 @@ import "./settings.css";
 const PACE_PRESETS: Array<{ value: number; label: string; hint: string }> = [
   { value: 50, label: "Shorter", hint: "Pauses to check in sooner" },
   { value: 100, label: "Balanced", hint: "Pauses after a moderate stretch" },
-  { value: 200, label: "Longer", hint: "Recommended — does more before pausing" },
+  { value: 200, label: "Longer", hint: "Recommended. Does more before pausing" },
 ];
 const DEFAULT_PACE = 200;
 
@@ -139,7 +139,7 @@ export function SettingsPanel() {
               <h2 className="settings-section__title">How long the agent works</h2>
               <p className="settings-section__hint">
                 Excelente pauses to check in with you after a stretch of work. Pick how much it does
-                before pausing — you can always click “Continue Working” to keep it going.
+                before pausing. You can always click “Continue Working” to keep it going.
               </p>
               <div className="pace-options" role="group" aria-label="Agent pace">
                 {PACE_PRESETS.map((preset) => (
@@ -168,7 +168,7 @@ export function SettingsPanel() {
           <span className="settings-about__brand">Excelente</span>{" "}
           <span className="settings-about__tag">alpha</span>{" "}
           {update?.deployed.env === "dev" && (
-            <span className="settings-about__env" title="Development instance — not production">
+            <span className="settings-about__env" title="Development instance, not production">
               DEV
             </span>
           )}{" "}
@@ -232,7 +232,7 @@ function AcreFreeSection({ selected }: { selected: boolean }) {
           </>
         ) : (
           <>
-            <strong>{label}</strong> needs no key and no sign-in — pick it as your model below.
+            <strong>{label}</strong> needs no key and no sign-in. Pick it as your model below.
           </>
         )}{" "}
         A.CRE covers the cost to make it accessible to students / learners. Includes certain limits

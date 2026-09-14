@@ -119,7 +119,7 @@ export function ModelDetailsCard({ model, models, reasoning }: ModelDetailsCardP
           <span className="model-card__cap-name">Reasoning</span>
           {model.supportsReasoning
             ? alwaysReasons
-              ? "thinks before answering — always on for this model"
+              ? "thinks before answering, always on for this model"
               : "can think before answering; set the level under Reasoning"
             : "answers directly, with no thinking step"}
         </li>

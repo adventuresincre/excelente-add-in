@@ -245,7 +245,7 @@ function defaultSkillStore(): SkillStore {
     return createIndexedDbSkillStore();
   }
   console.warn(
-    "IndexedDB unavailable — user-installed skills will not persist across reloads."
+    "IndexedDB unavailable. User-installed skills will not persist across reloads."
   );
   return createInMemorySkillStore();
 }
@@ -255,7 +255,7 @@ function defaultConversationStore(): ConversationStore {
     return createIndexedDbConversationStore();
   }
   console.warn(
-    "IndexedDB unavailable — chat history will not persist across reloads."
+    "IndexedDB unavailable. Chat history will not persist across reloads."
   );
   return createInMemoryConversationStore();
 }
@@ -265,7 +265,7 @@ function defaultMcpServerStore(): McpServerStore {
     return createIndexedDbMcpServerStore();
   }
   console.warn(
-    "IndexedDB unavailable — MCP server configs will not persist across reloads."
+    "IndexedDB unavailable. MCP server configs will not persist across reloads."
   );
   return createInMemoryMcpServerStore();
 }

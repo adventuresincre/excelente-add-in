@@ -256,7 +256,7 @@ function McpAddForm({ onAdd, existingNames }: McpAddFormProps) {
   const validationError = useMemo(() => {
     if (!name && !url) return null;
     if (name && !isValidMcpServerName(name)) {
-      return "Name must be lower-kebab — letters, digits, and hyphens only (e.g. 'acre-hub').";
+      return "Name must be lower-kebab: letters, digits, and hyphens only (e.g. 'acre-hub').";
     }
     if (existingNames.includes(name)) {
       return `An MCP server named "${name}" already exists.`;
@@ -343,8 +343,8 @@ function McpServerRow({ status, active, onToggleActive, onRemove }: McpServerRow
         className="mcp-server-row__toggle"
         title={
           active
-            ? "On — this connector's tools are loaded into the agent. Click to turn off."
-            : "Off — turn on to load this connector's tools into the agent."
+            ? "On. This connector's tools are loaded into the agent. Click to turn off."
+            : "Off. Turn on to load this connector's tools into the agent."
         }
       >
         <input

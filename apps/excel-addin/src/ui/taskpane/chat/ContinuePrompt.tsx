@@ -39,7 +39,7 @@ export function ContinuePrompt({ reason, onContinue, onDismiss }: ContinuePrompt
       <p className="continue-working__hint">
         {reason.kind === "turn-limit"
           ? "Picks up where it left off. Raise the limit in Settings, under “How long the agent works”."
-          : "Picks up where it left off, or just type what you want next."}
+          : "Picks up where it left off, or type what you want next."}
       </p>
     </div>
   );

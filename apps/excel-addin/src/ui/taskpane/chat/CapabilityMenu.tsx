@@ -73,7 +73,7 @@ export function CapabilityMenu({ onManage, onClose }: CapabilityMenuProps) {
     <div className="capability-menu" role="group" aria-label="Connectors and skills">
       <CapabilityGroup
         title="Connectors"
-        emptyHint="No connectors yet — add one in Manage."
+        emptyHint="No connectors yet. Add one in Manage."
         onManage={() => {
           onClose();
           onManage("connectors");
@@ -91,7 +91,7 @@ export function CapabilityMenu({ onManage, onClose }: CapabilityMenuProps) {
       />
       <CapabilityGroup
         title="Skills"
-        emptyHint="No skills installed — add one in Manage."
+        emptyHint="No skills installed. Add one in Manage."
         onManage={() => {
           onClose();
           onManage("skills");

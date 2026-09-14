@@ -189,7 +189,7 @@ export function App() {
             setView("chat");
           }}
           aria-label="New chat"
-          title="New chat — saves current to History, opens a fresh thread"
+          title="New chat. Saves the current one to History and opens a fresh thread"
         >
           <svg
             width="14"

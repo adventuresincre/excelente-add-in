@@ -102,7 +102,7 @@ export function HistoryPanel({
       <div className="history-panel">
         <div className="history-panel__empty" role="alert">
           <p>Couldn&apos;t load saved chats for this workbook.</p>
-          <p>The current conversation is still in this pane — reload the add-in and try History again.</p>
+          <p>The current conversation is still in this pane. Reload the add-in and try History again.</p>
         </div>
       </div>
     );
@@ -113,7 +113,7 @@ export function HistoryPanel({
       <div className="history-panel">
         <div className="history-panel__empty">
           <p>No conversations yet for this workbook.</p>
-          <p>Conversations auto-save as you chat — they&apos;ll appear here.</p>
+          <p>Conversations auto-save as you chat, and they&apos;ll appear here.</p>
         </div>
       </div>
     );

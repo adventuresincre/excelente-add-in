@@ -1344,7 +1344,7 @@ export function applyEvent(items: TurnItem[], event: AgentEvent): TurnItem[] {
         kind: "system",
         id: makeId(),
         icon: "↻",
-        title: `${RETRY_TITLES[event.reason]} — retrying (${event.attempt}/${event.maxAttempts})`,
+        title: `${RETRY_TITLES[event.reason]}, retrying (${event.attempt}/${event.maxAttempts})`,
         body: event.error,
       };
       const last = rolledBack[rolledBack.length - 1];
@@ -1363,7 +1363,7 @@ const RETRY_TITLES: Record<StreamRetryReason, string> = {
   provider: "Provider error",
   network: "Connection problem",
 };
-const RETRY_NOTICE = /— retrying \(\d+\/\d+\)$/;
+const RETRY_NOTICE = /, retrying \(\d+\/\d+\)$/;
 
 /**
  * Remove the tail of the in-flight assistant item that a failed stream

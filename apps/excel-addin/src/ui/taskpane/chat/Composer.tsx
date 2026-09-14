@@ -343,7 +343,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     const insertDisabledReason = !hostSupportsInsert
       ? "Inserting worksheets needs Excel 2021 or Microsoft 365."
       : tooBig
-        ? "File is too large to insert — read as text instead."
+        ? "File is too large to insert. Read as text instead."
         : undefined;
     setPendingSheets((p) => [
       ...p,
@@ -722,7 +722,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
             disabled
               ? (disabledHint ?? "Disabled")
               : busy
-                ? "Steer the agent — Enter queues for its next step"
+                ? "Steer the agent. Enter queues for its next step"
                 : "Ask Excelente…  (type / for commands and skills)"
           }
           value={text}
@@ -811,7 +811,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
             className={`composer__mode-option${chatMode === "plan" ? " is-active" : ""}`}
             aria-pressed={chatMode === "plan"}
             onClick={() => onChatModeChange("plan")}
-            title="Plan mode — read-only; agent proposes a numbered plan before any writes."
+            title="Plan mode: read-only. The agent proposes a numbered plan before any writes."
           >
             Plan
           </button>
@@ -820,7 +820,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
             className={`composer__mode-option${chatMode === "work" ? " is-active" : ""}`}
             aria-pressed={chatMode === "work"}
             onClick={() => onChatModeChange("work")}
-            title="Work mode — agent executes directly; writes still require approval."
+            title="Work mode: the agent executes directly. Writes still require approval."
           >
             Work
           </button>

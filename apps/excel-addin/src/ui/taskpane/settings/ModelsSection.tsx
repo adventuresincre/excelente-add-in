@@ -276,7 +276,7 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
             <h2 className="settings-section__title">Subagent model</h2>
             <p className="settings-section__hint">
               Powers subagents (Explore, Audit, Builder, Reviewer). Leave blank to use the primary.
-              A different model — especially for Reviewer — gives more independent verification.
+              A different model, especially for Reviewer, gives more independent verification.
             </p>
             <ModelPickerWithDefault
               models={toolModels}
@@ -307,7 +307,7 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
                 ? autoVisionModel
                   ? `Your primary can't read images, so leaving this blank routes them to ${shortName(autoVisionModel)}.`
                   : "Your primary can't read images, so leaving this blank routes them to the recommended vision model."
-                : "Your primary can read images, so leaving this blank sends them straight to it — no extra call, and it keeps the conversation context."}
+                : "Your primary can read images, so leaving this blank sends them straight to it, with no extra call, and it keeps the conversation context."}
             </p>
             <ModelPickerWithDefault
               models={visionModels}
@@ -332,7 +332,7 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
           <section className="settings-section">
             <h2 className="settings-section__title">Summary model</h2>
             <p className="settings-section__hint">
-              Used when the conversation grows past ~200k tokens — folds older turns into a
+              Used when the conversation grows past ~200k tokens. Folds older turns into a
               structured summary so the agent keeps focus. Runs once per long session. A cheaper
               model brings per-compaction cost down meaningfully since summarization doesn&apos;t
               need top-tier reasoning; the comparison opens sorted cheapest first. Leave blank to

@@ -465,7 +465,7 @@ export function ChatPanel({
               <span className="steering-queue__text" title={q.text}>
                 {q.text}
               </span>
-              <span className="steering-queue__meta">queued — delivers at the next step</span>
+              <span className="steering-queue__meta">queued, delivers at the next step</span>
               <button
                 type="button"
                 className="steering-queue__cancel"
@@ -631,7 +631,7 @@ function EmptyState({ modelId }: { modelId: string | null }) {
         </p>
       )}
       <p className="chat-panel__empty-hint">
-        Ask about this workbook, attach images or PDFs, or request a change — write tools require
+        Ask about this workbook, attach images or PDFs, or request a change. Write tools require
         your approval.
       </p>
     </div>

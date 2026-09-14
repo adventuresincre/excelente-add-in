@@ -76,8 +76,8 @@ export function describePause(reason: PauseReason): string {
   // the card's hint line, not here.
   if (reason.kind === "turn-limit") {
     return reason.steps === null
-      ? "Excelente paused — it reached its step limit for one message. Nothing it has done is lost."
-      : `Excelente paused after ${reason.steps} steps — its limit for one message. Nothing it has done is lost.`;
+      ? "Excelente paused at its step limit for one message. Nothing it has done is lost."
+      : `Excelente paused after ${reason.steps} steps, its limit for one message. Nothing it has done is lost.`;
   }
   const { open, total } = reason;
   const items = open === 1 ? "task is" : "tasks are";
