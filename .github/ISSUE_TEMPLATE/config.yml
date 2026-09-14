@@ -1,8 +1,11 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Try the hosted version
+  - name: Install the hosted version
+    url: https://marketplace.microsoft.com/en-us/product/WA200012017
+    about: Get Excelente into your Excel from Microsoft Marketplace. Free with your own OpenRouter key.
+  - name: About Excelente
     url: https://excelente.aiedge.ac
-    about: The build we host and support. Free with your own OpenRouter key.
+    about: What it does and who builds it.
   - name: Security vulnerability
     url: https://github.com/adventuresincre/excelente-add-in/security/advisories/new
     about: Report privately. Please do not open a public issue.

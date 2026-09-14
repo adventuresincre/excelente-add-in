@@ -2,7 +2,7 @@
 
 **An AI-first Excel add-in for financial modeling. You pick the model, it reads your whole workbook, and it does the work in the cells.**
 
-[excelente.aiedge.ac](https://excelente.aiedge.ac) · [Apache 2.0](LICENSE) · Built by [A.CRE](https://www.adventuresincre.com) and [AI.Edge](https://aiedge.ac)
+**[Install from Microsoft Marketplace](https://marketplace.microsoft.com/en-us/product/WA200012017)** · [excelente.aiedge.ac](https://excelente.aiedge.ac) · [Apache 2.0](LICENSE) · Built by [A.CRE](https://www.adventuresincre.com) and [AI.Edge](https://aiedge.ac)
 
 ---
 
@@ -33,9 +33,13 @@ examples, and they are the same format as Open Agent Skills.
 
 ## Try the hosted version first
 
-The easiest way to see what this does is [excelente.aiedge.ac](https://excelente.aiedge.ac).
-That is the build we host and support, and it is free to use with your own
-OpenRouter key.
+**[Install it from Microsoft Marketplace](https://marketplace.microsoft.com/en-us/product/WA200012017)**
+and it lands in your Excel in about a minute. That is the build we host and
+support. Excelente itself is free. You supply your own OpenRouter key and
+OpenRouter bills you directly for what you use, at their rates, with free-tier
+models available at no cost. We do not resell model usage.
+
+More about it at [excelente.aiedge.ac](https://excelente.aiedge.ac).
 
 This repository is for people who want to read the code, change it, run their own
 build, or contribute a fix.
