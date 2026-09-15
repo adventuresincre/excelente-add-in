@@ -2,7 +2,7 @@
 
 **An open-source AI harness for Excel. You choose the model, you choose the capabilities, and the work lands in the cells.**
 
-**[Install from Microsoft Marketplace](https://marketplace.microsoft.com/en-us/product/WA200012017)** · [excelente.aiedge.ac](https://excelente.aiedge.ac) · [Apache 2.0](LICENSE) · Built by [A.CRE](https://www.adventuresincre.com) and [AI.Edge](https://aiedge.ac)
+**[Install from Microsoft Marketplace](https://marketplace.microsoft.com/en-us/product/WA200012017)** · **[Documentation](https://excelente.aiedge.ac/documentation/)** · [excelente.aiedge.ac](https://excelente.aiedge.ac) · [Apache 2.0](LICENSE) · Built by [A.CRE](https://www.adventuresincre.com) and [AI.Edge](https://aiedge.ac)
 
 <p align="center">
   <img src="docs/screenshots/chat.png" width="32%" alt="Excelente chat pane inside Excel, showing the selected model">
@@ -51,6 +51,22 @@ We built it to teach CRE, so the modeling conventions are CRE conventions and th
 **Agent screenshots.** The agent can capture any range or chart as an image and look at it, the way you would after pasting a table. It does this after formatting passes, sensitivity tables, and charts, because values alone will not show a column rendering as hash marks or negatives that lost their parentheses.
 
 **Plan mode.** Plan mode investigates and proposes without touching a cell. Work mode executes, then verifies its own writes with a screenshot and a reviewer sub-agent before reporting back. Reads happen silently. Writes wait for your approval, and the undo stack takes any of them back.
+
+## Documentation
+
+Full documentation is at **[excelente.aiedge.ac/documentation](https://excelente.aiedge.ac/documentation/)**: 30 pages covering every feature, from installing and connecting a model through to writing your own skills and running your own build.
+
+Every page has a **Copy page** button that puts it on your clipboard as clean Markdown, so you can paste it straight into Claude Code, Cursor, or whatever agent you are working with. [llms.txt](https://excelente.aiedge.ac/llms.txt) indexes the whole set, and [llms-full.txt](https://excelente.aiedge.ac/llms-full.txt) is all of it in one file.
+
+The pages worth starting with:
+
+- [Install Excelente](https://excelente.aiedge.ac/documentation/install/)
+- [Connect a model](https://excelente.aiedge.ac/documentation/connect-a-model/)
+- [Quickstart](https://excelente.aiedge.ac/documentation/quickstart/), one task end to end
+- [Build and sideload your own](https://excelente.aiedge.ac/documentation/self-host/) if you are working from this repo
+- [Architecture](https://excelente.aiedge.ac/documentation/architecture/) before you change anything
+
+The source is in [`apps/excel-addin/docs/`](apps/excel-addin/docs/) and builds with `node scripts/build-docs.mjs`.
 
 ## Get It
 
