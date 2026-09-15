@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Emits dist/documentation/** — the Excelente documentation site.
+ * Emits dist/documentation/**, the Excelente documentation site.
  *
  * WHY THIS EXISTS. Excelente ships plan/work modes, approval gates, skills,
  * connectors, a model explorer and eight slash commands, and until now the
@@ -354,7 +354,7 @@ const CSS = `
 :root {
   color-scheme: light;
 
-  /* Palette — src/ui/design/tokens.css */
+  /* Palette, from src/ui/design/tokens.css */
   --cream: #f5f0e8;
   --cream-dark: #ede8dc;
   --warm-white: #faf8f5;

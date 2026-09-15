@@ -30,7 +30,7 @@ const DIST = resolve(ROOT, "dist");
 const DOCS_SRC = resolve(ROOT, "docs");
 
 if (!existsSync(DIST)) {
-  console.error("build-seo: dist/ not found — run `npm run build` first.");
+  console.error("build-seo: dist/ not found. Run `npm run build` first.");
   process.exit(1);
 }
 
