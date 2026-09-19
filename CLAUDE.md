@@ -13,10 +13,12 @@ All from `apps/excel-addin/`:
 ```
 npm run dev           # Vite dev server on https://localhost:3000
 npm run build         # production bundle into dist/
-npm run typecheck     # tsc --noEmit (the primary correctness gate)
-npm run test          # vitest run (93 files, ~970 tests)
+npm run typecheck     # tsc --noEmit, once per edition folder present (the primary correctness gate)
+npm run test          # vitest run, once per edition folder present (101 files, ~1120 tests)
 npm run test:watch    # vitest watch mode
 npm run lint          # office-addin-lint check (lint:fix to auto-fix)
+npm run check:boundary  # the edition seam holds (see Editions below)
+npm run build:pages   # documentation site and SEO files into dist/
 npm start             # sideload into Excel desktop
 npm run manifest:dev  # generate manifest.xml from the template
 npm run validate      # validate manifest.xml
@@ -49,13 +51,50 @@ apps/excel-addin/
 │   │   ├── vision/       # Attachments: images (downscale), PDFs (pdfjs-dist), spreadsheets (xlsx/jszip)
 │   │   ├── commands/     # Slash commands
 │   │   └── attachments/  # Spreadsheet import
+│   ├── edition/          # The edition seam. types.ts is the contract; @edition aliases one folder per build
+│   │   └── community/    # This build: bring your own key, no hosted models, the five skills below
 │   ├── ui/taskpane/      # React UI (chat, settings, skills, history, plan, design tokens)
 │   ├── taskpane/         # Vite entry points only. DO NOT add components here
 │   └── commands/         # Ribbon command entry point
 ├── skills/               # Bundled Open Agent Skills. See skills/LICENSE.md
-├── scripts/              # build-manifest.mjs, build-version.mjs, generate-brand-assets.mjs, measure-*
+├── docs/                 # The documentation site, one markdown page each; build-docs.mjs renders it
+├── scripts/              # build-manifest.mjs, build-version.mjs, edition.mjs, check-edition-boundary.mjs, build-docs.mjs, build-pages.mjs, generate-brand-assets.mjs, measure-*
 └── manifest.template.xml # Source of truth. manifest.xml is generated from it
 ```
+
+## Editions
+
+Excelente ships in editions. The shared tree, which is everything under `src/`
+outside `src/edition/`, is identical in every edition and never names one. An
+edition is a folder under `src/edition/` that implements
+[`src/edition/types.ts`](apps/excel-addin/src/edition/types.ts): which models it
+hosts itself (none here), what runs when a chosen model has no key (nothing
+here, so chat locks until a key is added), what the first-run wizard offers,
+any extra Settings section, and any extra bundled skills. The build aliases
+`@edition` to exactly one folder, chosen by `EXCELENTE_EDITION`, else an
+`edition.json` beside `package.json`, else `community`.
+
+This repository carries the **community** edition. The hosted build at
+excelente.aiedge.ac adds a second folder from its private repository. Nothing
+about that folder is needed to build, run, or contribute here.
+
+Three rules keep the seam clean, and `npm run check:boundary` enforces them:
+
+1. Only `src/ui/**` and `src/taskpane/**` import `@edition`. `src/core/**`
+   stays edition-free; whatever it needs is passed in (see
+   `withExtraSkillFiles` at the AppProvider root, or `resolveRunningPref`).
+2. Nothing outside an edition folder imports from inside one, and editions do
+   not import each other.
+3. An edition may declare tokens in its `boundary.json` that must not appear
+   elsewhere under `src/`.
+
+If you add a slot to the contract, give `community/` an honest implementation
+of it, usually empty, and keep the shared code working when the slot is empty.
+
+The documentation pages under `docs/` are shared too. A page may carry an
+`<!-- edition:include name -->` block; `build-docs.mjs` replaces it with
+`src/edition/<edition>/docs/name.md` when that file exists and otherwise keeps
+the block's own text. Write the block's text for this edition.
 
 Every `core/*` folder has a `README.md` describing its public interface. Read it
 before you change what the folder exports.
@@ -95,6 +134,8 @@ These are all here because something broke once.
   Office.js I/O goes through the datasource abstraction. Office.js proxy
   batching will bite you if it is scattered.
 - **No direct `fetch("openrouter.ai/...")` outside `core/openrouter/`.**
+- **`@edition` only from `src/ui/**` and `src/taskpane/**`**, and never reach
+  into `src/edition/<name>/` from outside it. See Editions above.
 - **`src/taskpane/` is the Vite entry point only.** Components live under
   `src/ui/taskpane/`.
 - **`manifest.template.xml` is the source of truth.** `manifest.xml` is
