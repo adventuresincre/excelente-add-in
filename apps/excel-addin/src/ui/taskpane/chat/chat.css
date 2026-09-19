@@ -1048,11 +1048,18 @@
    machinery, not foreground content. Errors get color; everything else
    stays quiet. */
 
+/* The group owns the row's width so the expanded panel lines up under it. */
+.tool-line-group {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
 .tool-line {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  align-self: stretch;
+  width: 100%;
   padding: 2px var(--sp-2);
   font-size: var(--fs-overline);
   border-radius: var(--r-sm);
@@ -1060,11 +1067,38 @@
   border: 0;
   color: var(--text-muted);
   font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
   transition: background var(--duration-micro) var(--ease-editorial);
 }
 
 .tool-line:hover {
   background: var(--warm-white);
+}
+
+.tool-line:focus-visible {
+  outline: 2px solid var(--gold-text);
+  outline-offset: 1px;
+}
+
+/* Caret is the only affordance that the row opens; it stays near-invisible
+   until hover so a chain of twenty reads does not read as twenty controls. */
+.tool-line__caret {
+  display: inline-block;
+  width: 0.7em;
+  flex-shrink: 0;
+  font-size: 9px;
+  opacity: 0.35;
+  transition: transform var(--duration-micro) var(--ease-editorial);
+}
+
+.tool-line:hover .tool-line__caret {
+  opacity: 0.7;
+}
+
+.tool-line__caret--open {
+  transform: rotate(90deg);
+  opacity: 0.7;
 }
 
 .tool-line__icon {
@@ -1076,22 +1110,129 @@
   flex-shrink: 0;
 }
 
-.tool-line__name {
-  font-family: var(--font-mono);
+/* Sans, not mono: the verb is prose now ("Searched skills"), and mono made
+   every row read as machine output regardless of what it said. */
+.tool-line__verb {
+  font-family: var(--font-sans);
   font-size: var(--fs-overline);
   color: var(--text-body);
-  background: transparent;
-  padding: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tool-line__summary {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--fs-overline);
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+/* The outcome. Right-aligned against the status glyph so a reader can scan
+   one column to see what every call actually returned. */
+.tool-line__outcome {
+  margin-left: auto;
+  padding-left: var(--sp-2);
+  font-size: var(--fs-overline);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* gold-text, not --gold: the decorative golds sit at ~2.1:1 and must never
+   carry words (see tokens.css). */
+.tool-line__outcome--warn {
+  color: var(--gold-text);
+}
+
+.tool-line__outcome--bad {
+  color: var(--destructive);
+}
+
+.tool-line__outcome + .tool-line__glyph {
+  margin-left: var(--sp-1);
+}
+
+/* ---- expanded panel ---- */
+
+.tool-line__detail {
+  margin: 2px 0 var(--sp-2) calc(var(--sp-2) + 0.7em);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--warm-white);
+  border-radius: var(--r-md);
+  font-size: var(--fs-overline);
+  line-height: 1.55;
+}
+
+.tool-line__facts {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.tool-line__fact {
+  display: grid;
+  grid-template-columns: minmax(0, 8em) minmax(0, 1fr);
+  gap: var(--sp-2);
+}
+
+.tool-line__fact dt {
+  color: var(--text-muted);
+}
+
+.tool-line__fact dd {
+  margin: 0;
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+
+/* The last fact is always the machine row (real tool name + permission), so
+   it gets a rule above it and mono type: this is the string you quote. */
+.tool-line__fact:last-child {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--web-rule, var(--cream-dark));
+}
+
+.tool-line__fact:last-child dd {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.tool-line__raw-toggle {
+  margin-top: var(--sp-2);
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-overline);
+  color: var(--gold-text);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tool-line__raw-toggle:focus-visible {
+  outline: 2px solid var(--gold-text);
+  outline-offset: 2px;
+}
+
+.tool-line__raw {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2);
+  max-height: 260px;
+  overflow: auto;
+  background: var(--cream);
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* ---- status glyphs (replaces .tool-line__status text) ---- */
@@ -2874,6 +3015,45 @@
 
 .connect-setup__primary {
   width: 100%;
+}
+
+/* The provider list on "Connect your model". One card per provider; the
+   key field sits inside the card it belongs to, so a second provider can be
+   added beside it without another screen. */
+.connect-setup__providers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.connect-setup__provider {
+  padding: var(--sp-4);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-base);
+  background: var(--cream-dark);
+}
+
+.connect-setup__provider-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+}
+
+.connect-setup__provider-name {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h2);
+  line-height: 1.2;
+  color: var(--charcoal);
+}
+
+.connect-setup__provider-blurb {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
 }
 
 .connect-setup__or {

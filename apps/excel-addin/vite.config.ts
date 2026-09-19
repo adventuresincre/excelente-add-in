@@ -5,6 +5,7 @@ import { getHttpsServerOptions } from "office-addin-dev-certs";
 import { resolve } from "path";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
+import { devProxyTarget, editionDir, resolveEdition } from "./scripts/lib/edition.mjs";
 
 /**
  * Build identity, resolved once per build.
@@ -57,14 +58,23 @@ export default defineConfig(async ({ command }) => {
 
   const build = buildIdentity();
 
+  // Which edition this build is (see src/edition/types.ts). `@edition`
+  // resolves to that folder and nowhere else, so a community build contains
+  // no other edition's code. Decided by scripts/lib/edition.mjs from the
+  // environment, then edition.json, then the community default.
+  const edition = resolveEdition();
   // Optional dev-only proxy target. See the `proxy` block below.
-  const devProxyTarget = (process.env.EXCELENTE_DEV_PROXY_TARGET ?? "").replace(/\/+$/, "");
+  const proxyTarget = devProxyTarget();
 
   return {
     define: {
       __APP_VERSION__: JSON.stringify(build.version),
       __BUILD_SHA__: JSON.stringify(build.sha),
       __BUILD_TIME__: JSON.stringify(build.time),
+      __EDITION__: JSON.stringify(edition),
+    },
+    resolve: {
+      alias: { "@edition": editionDir(edition) },
     },
     plugins: [react()],
     server: {
@@ -79,30 +89,27 @@ export default defineConfig(async ({ command }) => {
       strictPort: true,
       https: https && { key: https.key, cert: https.cert, ca: https.ca },
       headers: { "Access-Control-Allow-Origin": "*" },
-      // Two paths that a deployed instance serves through its own web server
-      // and that a local dev server has no way to answer:
+      // Paths a deployed instance serves through its own web server and that
+      // a local dev server has no way to answer:
       //
-      //   /api/free  a hosted proxy that holds the OpenRouter key server-side
-      //              and meters spend, so the pane can run with no key of its
-      //              own. Optional. Without it, add your own OpenRouter key in
-      //              Settings and everything works.
-      //   /data      a periodically rebuilt model capability catalog, read as
-      //              a static JSON file. Optional; the catalog loader returns
-      //              null when it is missing and the pane carries on.
+      //   /api/*  hosted services that hold a key server-side (a hosted model
+      //           tier, a connector). Optional. Without them, add your own
+      //           OpenRouter key in Settings and everything works.
+      //   /data   a periodically rebuilt model capability catalog, read as a
+      //           static JSON file. Optional; the catalog loader returns null
+      //           when it is missing and the pane carries on.
       //
-      // Set EXCELENTE_DEV_PROXY_TARGET to the origin of an instance you
-      // control to forward both during `npm run dev`. Unset (the default) is
-      // the right answer for most contributors: nothing is proxied, and the
-      // add-in runs entirely on your own OpenRouter key. Do not point this at
-      // an instance you do not own.
-      proxy: devProxyTarget
+      // Set EXCELENTE_DEV_PROXY_TARGET (or `devProxyTarget` in edition.json)
+      // to the origin of an instance you control to forward both during
+      // `npm run dev`. Vite forwards the browser's Origin (https://localhost:3000)
+      // by default, and a hosted service allowlists its own origin, so it is
+      // overridden. Unset (the default) is the right answer for most
+      // contributors: nothing is proxied, and the add-in runs entirely on your
+      // own OpenRouter key. Do not point this at an instance you do not own.
+      proxy: proxyTarget
         ? {
-            "/api/free": {
-              target: devProxyTarget,
-              changeOrigin: true,
-              headers: { Origin: devProxyTarget },
-            },
-            "/data": { target: devProxyTarget, changeOrigin: true },
+            "/api": { target: proxyTarget, changeOrigin: true, headers: { Origin: proxyTarget } },
+            "/data": { target: proxyTarget, changeOrigin: true },
           }
         : undefined,
     },

@@ -26,7 +26,8 @@ The details card under your selected model spells each one out in plain language
 
 | Group | Contents |
 |---|---|
-| A.CRE Free Model (For Students / Learners) | The A.CRE-funded model |
+<!-- edition:include choosing-a-model/hosted-row -->
+<!-- /edition:include -->
 | Free Models (may train on your data) | OpenRouter's free tier |
 | Top 10 · Capability (tools, reasoning, vision) | The most capable models that can do all three |
 | Top 10 · Value (tools, reasoning, vision) | Capability against price, paid models only |
@@ -62,8 +63,8 @@ prompts.
 
 Your prompts here contain your workbook. Do not point the free tier at a live deal.
 
-A.CRE Free is a different arrangement. A.CRE pays a provider, and your workbook is not used for
-training.
+<!-- edition:include choosing-a-model/hosted-note -->
+<!-- /edition:include -->
 
 ## Compare all models
 
@@ -107,13 +108,8 @@ Used when a conversation passes about 200,000 tokens and gets compacted. It runs
 session and does not need frontier reasoning, so a cheap model here meaningfully lowers the cost of
 long work.
 
-## On A.CRE Free
-
-Every role runs the A.CRE-selected model: primary, sub-agents, Reviewer, and vision. Advanced stays
-hidden.
-
-With a key added alongside, you can override individual roles. Those overrides run on your key and
-are billed to you.
+<!-- edition:include choosing-a-model/hosted-section -->
+<!-- /edition:include -->
 
 ## A reasonable starting point
 

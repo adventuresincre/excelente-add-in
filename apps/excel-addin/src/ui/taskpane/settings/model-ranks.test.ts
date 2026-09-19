@@ -37,7 +37,11 @@ const freeScored = model("nvidia/nemotron:free", {
   pricing: { prompt: 0, completion: 0 },
   family: null,
 });
-const acre = model("acre-free", { capability: 99 });
+// A hosted row (an edition's own tier) never ranks, however it is scored.
+const acre = model("host-tier", {
+  capability: 99,
+  hosted: { lab: "Host", groupKey: "host", groupLabel: "Host Tier" },
+});
 const population = [astra, sol, twin, flash, unranked, freeScored, acre];
 
 describe("rankModels", () => {
@@ -52,7 +56,7 @@ describe("rankModels", () => {
     expect(ranks.ofCapability).toBe(5);
   });
 
-  it("leaves unscored models and A.CRE Free out entirely", () => {
+  it("leaves unscored models and hosted rows out entirely", () => {
     expect(ranks.byId.get(unranked.id)).toBeUndefined();
     expect(ranks.byId.get(acre.id)).toBeUndefined();
   });
@@ -78,7 +82,7 @@ describe("rankModels", () => {
 describe("Top 10 lists", () => {
   const ranks = rankModels(population);
 
-  it("qualifies only models with tools, reasoning and vision, never A.CRE Free", () => {
+  it("qualifies only models with tools, reasoning and vision, never a hosted row", () => {
     expect(qualifiesForTopLists(astra)).toBe(true);
     expect(qualifiesForTopLists({ ...astra, supportsVision: false })).toBe(false);
     expect(qualifiesForTopLists({ ...astra, supportsReasoning: false })).toBe(false);

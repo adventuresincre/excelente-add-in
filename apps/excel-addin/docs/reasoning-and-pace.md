@@ -5,8 +5,10 @@ group: Models
 order: 2
 ---
 
+<!-- edition:include reasoning-and-pace/intro -->
 Both settings live under **Settings** → **Advanced**, which appears once you have saved an OpenRouter
-key. A.CRE Free pins both and hides the section.
+key.
+<!-- /edition:include -->
 
 ## Reasoning
 
@@ -53,7 +55,9 @@ That line exists so you can reason about cost. "High" on one model can be a lowe
 | Building a model, sizing debt, auditing | Medium |
 | A build you will put in front of a committee | High |
 
-Medium is the sensible default and is what A.CRE Free is pinned to.
+<!-- edition:include reasoning-and-pace/medium -->
+Medium is the sensible default.
+<!-- /edition:include -->
 
 ## How long the agent works
 
@@ -78,7 +82,8 @@ Reaching the limit stops nothing permanently:
 The same prompt appears when a run ends with items still open on the agent's checklist, worded to say
 how many.
 
-A.CRE Free runs at 200 turns.
+<!-- edition:include reasoning-and-pace/hosted-turns -->
+<!-- /edition:include -->
 
 ## Interaction between the two
 

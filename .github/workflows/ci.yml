@@ -30,6 +30,11 @@ jobs:
 
       - run: npm ci
 
+      # Nothing outside src/edition/<name>/ reaches inside it, and src/core
+      # never imports @edition. See CLAUDE.md, Editions.
+      - name: Edition boundary
+        run: npm run check:boundary
+
       # tsc is the real correctness gate. Vite's build tolerates type errors
       # that tsc catches, so run this first and separately.
       - name: Typecheck

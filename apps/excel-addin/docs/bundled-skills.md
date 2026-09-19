@@ -76,7 +76,7 @@ a fork's Skills panel shows two rows rather than eleven until you add your own.
 This is the one place the hosted add-in and a fork genuinely differ in what they can do out of the
 box. Everything else on this site applies to both.
 
-Provenance for all fourteen is in `apps/excel-addin/skills/THIRD_PARTY_LICENSES.md`; the public
+Provenance for all fourteen is in `apps/excel-addin/src/edition/acre/skills/THIRD_PARTY_LICENSES.md`; the public
 repo's `skills/LICENSE.md` covers the five it ships. The scope of the Apache licence is in the
 repository's `NOTICE`.
 

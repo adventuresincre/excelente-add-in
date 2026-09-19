@@ -12,8 +12,10 @@ Excelente is Apache 2.0. Everything you need to run your own build is in
 
 - **Node 22 or newer.** Vite 6 also accepts 18 and 20, but 22 is what we build against.
 - **Excel desktop** on Windows or Mac, on Microsoft 365. Sideloading needs a desktop host.
-- **An OpenRouter key.** Your own build has no A.CRE Free. That endpoint is funded by A.CRE for the
-  hosted add-in, and a fork pointing at it would be spending someone else's money.
+<!-- edition:include self-host/key-bullet -->
+- **An OpenRouter key.** The community edition has no hosted model tier; your build talks to
+  OpenRouter with your key and nothing else.
+<!-- /edition:include -->
 
 ## Setup
 

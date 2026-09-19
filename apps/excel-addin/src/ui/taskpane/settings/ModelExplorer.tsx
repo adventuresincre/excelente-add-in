@@ -23,6 +23,11 @@ export interface ModelExplorerProps {
   onClose: () => void;
   initialSort?: ExplorerSort;
   /**
+   * True when the user has no OpenRouter key: every row is browsable and
+   * choosable, but runs only once a key exists. Rows say so.
+   */
+  needsKey?: boolean;
+  /**
    * Filters the role requires — the vision role can only take a model that
    * sees. Rendered checked and disabled so the constraint is visible rather
    * than silently applied.
@@ -45,6 +50,7 @@ export function ModelExplorer({
   onSelect,
   onClose,
   initialSort = "capability",
+  needsKey = false,
   lockedFilters,
 }: ModelExplorerProps) {
   const [sort, setSort] = useState<ExplorerSort>(initialSort);
@@ -137,6 +143,11 @@ export function ModelExplorer({
       </div>
 
       <p className="model-explorer__legend">
+        {needsKey && (
+          <>
+            Every model here needs an OpenRouter key. Pick one anyway; it waits for the key.{" "}
+          </>
+        )}
         #n is the model&apos;s rank among the models you can pick, from an independent benchmark
         (Artificial Analysis); the number after it is the score itself. Value ranks capability
         against price, paid models only. Prices are per 1M tokens, in/out.
@@ -174,6 +185,11 @@ export function ModelExplorer({
                   <span className="model-row__name">{displayName(m)}</span>
                   <span className="model-row__lab">{labForModel(m)}</span>
                   {free && <span className="model-row__badge">Free</span>}
+                  {needsKey && (
+                    <span className="model-row__badge model-row__badge--key">
+                      {selected ? "Chosen, waiting on key" : "Needs key"}
+                    </span>
+                  )}
                 </span>
                 <span className="model-row__meta">
                   <span className="model-row__score">

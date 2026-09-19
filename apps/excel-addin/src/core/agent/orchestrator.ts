@@ -118,8 +118,8 @@ export interface OrchestratorDeps {
    * explicit model override. Defaults to `client`, which is the only correct
    * answer whenever both are the same account.
    *
-   * It exists for one asymmetric case: the primary is A.CRE Free, so
-   * `client` is A.CRE's proxy on A.CRE's key with the model pinned
+   * It exists for one asymmetric case: the primary is a hosted tier, so
+   * `client` is the host's proxy on the host's key with the model pinned
    * server-side. A role override sent there would be silently replaced by
    * the pinned model — the user's pick would appear to work and do nothing.
    * Pointing role overrides at the user's own OpenRouter client instead
@@ -171,7 +171,7 @@ export interface RunOptions {
   /**
    * Credential for `deps.roleClient`. Required when that client
    * authenticates differently from `deps.client` — which is the whole
-   * reason it exists (A.CRE Free's proxy takes no credential at all).
+   * reason it exists (a hosted tier's proxy takes no credential at all).
    * Defaults to `apiKey`.
    */
   roleApiKey?: string;
@@ -723,9 +723,9 @@ const MAX_STREAM_RETRIES = 5;
  *
  * `roleClient` is consulted ONLY when the role carries an explicit override.
  * Without one the role is "same as primary", and the primary's client is the
- * only client that can serve the primary's model — sending the A.CRE Free
+ * only client that can serve the primary's model — sending a hosted tier's
  * pinned id to the user's own OpenRouter key would bill them for the model
- * A.CRE is paying for.
+ * the host is paying for.
  */
 function roleTargetFor(
   deps: OrchestratorDeps,

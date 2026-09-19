@@ -35,6 +35,15 @@ function model(id: string, family: ModelFamily, created: number): ModelInfo {
 
 const YEAR = 365 * 24 * 60 * 60;
 
+/** A row an edition hosts itself: its own group, ahead of every lab, no score. */
+const hostRow: ModelInfo = {
+  ...model("host-tier", "glm", Number.MAX_SAFE_INTEGER),
+  name: "Host Tier (Pinned Model)",
+  pricing: { prompt: 0, completion: 0 },
+  supportsVision: true,
+  hosted: { lab: "Host", groupKey: "host", groupLabel: "Host Tier" },
+};
+
 describe("groupByFamily", () => {
   it("groups models by family and preserves input order within each group", () => {
     const newer = model("anthropic/claude-opus-4-7", "claude", 1_750_000_000);
@@ -119,7 +128,7 @@ describe("groupModelsForPicker", () => {
     };
   }
 
-  it("puts A.CRE Free first, then free (with the train-on-data label), then Latest, then Legacy", () => {
+  it("puts hosted rows first, then free (with the train-on-data label), then Latest, then Legacy", () => {
     const recentClaude = paid("anthropic/claude-new", "claude", now - 10, {
       releasedAt: now - 30 * 24 * 3600,
     });
@@ -130,14 +139,17 @@ describe("groupModelsForPicker", () => {
     });
     const grok = paid("x-ai/grok-4.6", "grok", now - 50);
     const freeRow = free("z-ai/glm-4.7-flash:free", "glm", now - 40);
-    const groups = groupModelsForPicker([oldClaude, recentClaude, grok, freeRow], now);
+    const groups = groupModelsForPicker([oldClaude, recentClaude, grok, freeRow], now, {
+      hosted: [hostRow],
+    });
 
-    expect(groups[0]?.key).toBe("acre");
-    expect(groups[0]?.models[0]?.id).toBe("acre-free");
+    expect(groups[0]?.key).toBe("host");
+    expect(groups[0]?.label).toBe("Host Tier");
+    expect(groups[0]?.models[0]?.id).toBe("host-tier");
     expect(groups[1]?.label).toBe("Free Models (may train on your data)");
     expect(groups[1]?.models.map((m) => m.id)).toEqual(["z-ai/glm-4.7-flash:free"]);
     expect(groups.map((g) => g.key)).toEqual([
-      "acre",
+      "host",
       "free",
       "latest-claude",
       "latest-grok",
@@ -178,7 +190,8 @@ describe("groupModelsForPicker", () => {
       "openai/gpt-older-unscored",
     ]);
     // Labs stay alphabetical even though Claude's score beats GPT's second.
-    expect(groups.map((g) => g.key)).toEqual(["acre", "latest-claude", "latest-gpt"]);
+    // No hosted rows were passed, so no hosted group: the community picker.
+    expect(groups.map((g) => g.key)).toEqual(["latest-claude", "latest-gpt"]);
   });
 
   it("orders the free section by capability as well", () => {
@@ -308,7 +321,6 @@ describe("buildPicker — the Top 10 lists", () => {
     ];
     const { groups, ranks } = buildPicker(models, now);
     expect(groups.map((g) => g.key)).toEqual([
-      "acre",
       "free",
       "top-capability",
       "top-value",
@@ -366,7 +378,7 @@ describe("buildPicker — the Top 10 lists", () => {
   it("omits both lists when nothing qualifies (tests elsewhere rely on the old shape)", () => {
     const plain = { ...model("openai/gpt-plain", "gpt", now - 100), capability: 50 };
     const { groups } = buildPicker([plain], now);
-    expect(groups.map((g) => g.key)).toEqual(["acre", "latest-gpt"]);
+    expect(groups.map((g) => g.key)).toEqual(["latest-gpt"]);
   });
 
   it("encodes duplicate options distinctly and decodes them back to the model id", () => {
@@ -433,28 +445,45 @@ describe("pickAutoVisionModel", () => {
   });
 });
 
-describe("A.CRE Free picker row", () => {
-  it("names the live model when the proxy has reported one", () => {
-    const groups = groupModelsForPicker([], 100, { acreFreeModelLabel: "GLM 5.3 Flash" });
-    const acre = groups.find((g) => g.key === "acre");
-    expect(labelForPickerModel(acre!.models[0])).toBe("A.CRE Free (GLM 5.3 Flash)");
-  });
-
-  // First paint always renders before /health answers, so the un-labelled
-  // row is a real state, not an error path.
-  it("reads as the bare tier name before the model is known", () => {
-    const groups = groupModelsForPicker([], 100);
-    const acre = groups.find((g) => g.key === "acre");
-    expect(labelForPickerModel(acre!.models[0])).toBe("A.CRE Free");
+describe("hosted rows", () => {
+  it("renders the row's name as given, with no lab prefix stripped", () => {
+    const groups = groupModelsForPicker([], 100, { hosted: [hostRow] });
+    const host = groups.find((g) => g.key === "host");
+    expect(labelForPickerModel(host!.models[0])).toBe("Host Tier (Pinned Model)");
+    expect(displayName(hostRow)).toBe("Host Tier (Pinned Model)");
+    expect(labForModel(hostRow)).toBe("Host");
   });
 
   // The label must never pick up the pricing/score decorations the real
   // OpenRouter rows carry — the model is subsidized and server-pinned.
   it("carries no pricing, score or context decoration", () => {
-    const groups = groupModelsForPicker([], 100, { acreFreeModelLabel: "GLM 5.3 Flash" });
-    const label = labelForPickerModel(groups.find((g) => g.key === "acre")!.models[0]);
+    const groups = groupModelsForPicker([], 100, { hosted: [hostRow] });
+    const label = labelForPickerModel(groups.find((g) => g.key === "host")!.models[0]);
     expect(label).not.toContain("$");
     expect(label).not.toContain("·");
+  });
+
+  it("appears even when the OpenRouter list is empty, and only when passed", () => {
+    expect(groupModelsForPicker([], 100, { hosted: [hostRow] }).map((g) => g.key)).toEqual([
+      "host",
+    ]);
+    expect(groupModelsForPicker([], 100)).toEqual([]);
+  });
+
+  it("groups several rows by their group key, in order", () => {
+    const second: ModelInfo = {
+      ...hostRow,
+      id: "host-pro",
+      name: "Host Pro",
+      hosted: { lab: "Host", groupKey: "host-pro", groupLabel: "Host Pro" },
+    };
+    const groups = groupModelsForPicker([], 100, { hosted: [hostRow, second] });
+    expect(groups.map((g) => g.key)).toEqual(["host", "host-pro"]);
+  });
+
+  it("drops a row passed without the hosted marker rather than inventing a group", () => {
+    const plain = model("vendor/plain", "gpt", 100);
+    expect(groupModelsForPicker([], 100, { hosted: [plain] })).toEqual([]);
   });
 });
 
@@ -478,10 +507,10 @@ describe("free models bypass the family allowlist", () => {
     expect(free?.models.map((m) => m.id)).toEqual([gemma.id, nemotron.id]);
   });
 
-  it("labels the two free sections as the owner specified", () => {
-    const groups = groupModelsForPicker([gemma], 100);
+  it("labels the hosted and free sections as given", () => {
+    const groups = groupModelsForPicker([gemma], 100, { hosted: [hostRow] });
     expect(groups.map((g) => g.label)).toEqual([
-      "A.CRE Free Model (For Students / Learners)",
+      "Host Tier",
       "Free Models (may train on your data)",
     ]);
   });
@@ -494,11 +523,13 @@ describe("free models bypass the family allowlist", () => {
     expect(groups.flatMap((g) => g.models.map((m) => m.id))).not.toContain("cohere/north-pro");
   });
 
-  it("keeps A.CRE Free out of the may-train section", () => {
-    const groups = groupModelsForPicker([gemma], 100);
+  // A hosted row is priced at zero too, and must not be mistaken for one of
+  // OpenRouter's free models, even if a caller puts it in the model list.
+  it("keeps a hosted row out of the may-train section", () => {
+    const groups = groupModelsForPicker([gemma, hostRow], 100, { hosted: [hostRow] });
     const free = groups.find((g) => g.key === "free");
-    expect(free?.models.some((m) => m.id === "acre-free")).toBe(false);
-    expect(groups.find((g) => g.key === "acre")?.models).toHaveLength(1);
+    expect(free?.models.some((m) => m.id === "host-tier")).toBe(false);
+    expect(groups.find((g) => g.key === "host")?.models).toHaveLength(1);
   });
 });
 
@@ -533,10 +564,10 @@ describe("resolveDefaultVisionModelId", () => {
     ).toBe(configured.id);
   });
 
-  // A.CRE Free's sentinel is never in the OpenRouter list, and the proxy
+  // A hosted row's sentinel is never in the OpenRouter list, and the host
   // re-pins the model on every call, so a describer could not be honored.
-  it("routes A.CRE Free inline", () => {
-    expect(resolveDefaultVisionModelId(all, { modelId: "acre-free" })).toBeNull();
+  it("routes a vision-capable hosted row inline", () => {
+    expect(resolveDefaultVisionModelId(all, { modelId: "host-tier" }, [hostRow])).toBeNull();
   });
 
   // Routing an image to a model that cannot read it fails silently; an
@@ -565,7 +596,12 @@ describe("primarySupportsVision", () => {
     expect(primarySupportsVision([blind], null)).toBeUndefined();
   });
 
-  it("treats A.CRE Free as vision-capable", () => {
-    expect(primarySupportsVision([], "acre-free")).toBe(true);
+  it("reads a hosted row's capability from the row itself", () => {
+    expect(primarySupportsVision([], "host-tier", [hostRow])).toBe(true);
+    expect(primarySupportsVision([], "host-tier", [{ ...hostRow, supportsVision: false }])).toBe(
+      false
+    );
+    // Not told about the row: unknowable, exactly like any unlisted id.
+    expect(primarySupportsVision([], "host-tier")).toBeUndefined();
   });
 });

@@ -55,6 +55,8 @@ import {
 } from "../../core/tools";
 import {
   bundledSkillSource,
+  sharedBundledFiles,
+  withExtraSkillFiles,
   createInMemorySkillStore,
   createIndexedDbSkillStore,
   createSkillRegistry,
@@ -65,6 +67,8 @@ import {
   type SkillStore,
 } from "../../core/skills";
 import { createPdfRasterizer, type PdfRasterizer } from "../../core/vision";
+import { resolveRunningPref } from "./pending-model";
+import { edition } from "@edition";
 import {
   createAuthClient,
   createSessionStore,
@@ -102,7 +106,16 @@ export interface AppContextValue {
   /** True until the initial settings load completes. */
   loading: boolean;
   apiKey: string | null;
+  /** The stored choice. What Settings shows and edits. */
   modelPref: ModelPref | null;
+  /**
+   * What actually drives requests: the choice when a key exists, the
+   * edition's keyless fallback (or nothing) when it does not. Everything
+   * that sends a request reads this one.
+   */
+  runningModelPref: ModelPref | null;
+  /** The chosen model that is waiting for a key, or null. */
+  pendingModelId: string | null;
   setApiKey: (key: string) => Promise<void>;
   clearApiKey: () => Promise<void>;
   setModelPref: (pref: ModelPref) => Promise<void>;
@@ -316,7 +329,13 @@ export function AppProvider({
     () => skillStoreOverride ?? defaultSkillStore(),
     [skillStoreOverride]
   );
-  const bundledSource = useMemo(() => bundledSkillSource(), []);
+  // The shared skills plus whatever this edition bundles on top (the acre
+  // edition adds the nine CRE Agents skills). Composed here, at the root,
+  // so `core/skills` never learns which edition it is in.
+  const bundledSource = useMemo(
+    () => bundledSkillSource(withExtraSkillFiles(sharedBundledFiles(), edition.bundledSkills)),
+    []
+  );
   const userSource = useMemo(() => userSkillSource(skillStore), [skillStore]);
   const skillRegistry = useMemo(
     () => skillRegistryOverride ?? createSkillRegistry([bundledSource, userSource]),
@@ -679,11 +698,18 @@ export function AppProvider({
     setPerModelStats({});
   }, []);
 
+  const { running: runningModelPref, pendingModelId } = useMemo(
+    () => resolveRunningPref(modelPref, apiKey, edition),
+    [modelPref, apiKey]
+  );
+
   const value: AppContextValue = useMemo(
     () => ({
       loading,
       apiKey,
       modelPref,
+      runningModelPref,
+      pendingModelId,
       setApiKey,
       clearApiKey,
       setModelPref,
@@ -724,6 +750,8 @@ export function AppProvider({
       loading,
       apiKey,
       modelPref,
+      runningModelPref,
+      pendingModelId,
       setApiKey,
       clearApiKey,
       setModelPref,

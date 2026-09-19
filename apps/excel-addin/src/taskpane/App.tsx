@@ -8,13 +8,8 @@ import { SettingsPanel } from "../ui/taskpane/settings";
 import { useModels } from "../ui/taskpane/settings/useModels";
 import { resolveDefaultVisionModelId } from "../ui/taskpane/settings/model-grouping";
 import { CapabilitiesPanel, type CapabilitySection } from "../ui/taskpane/capabilities";
-import {
-  ACRE_FREE_DISPLAY_NAME,
-  acreFreeLabel,
-  isAcreFreeModel,
-  resolveOpenRouterModelId,
-} from "../core/config";
-import { useAcreFreeInfo } from "../ui/taskpane/useAcreFreeInfo";
+import { edition, useHostedPickerRows } from "@edition";
+import { hostedModelFor, resolveUpstreamModelId } from "../edition/hosted";
 // The plan renders inside ChatPanel (pinned strip + overlay sheet); App only
 // derives it, because both the strip and the promote/review actions need the
 // same stream this component owns.
@@ -25,7 +20,9 @@ export function App() {
   const {
     loading,
     apiKey,
-    modelPref,
+    // The RUNNING preference, not the stored choice: without a key the
+    // choice may be waiting and the edition's fallback is what answers.
+    runningModelPref: modelPref,
     sessionCost,
     cacheStats,
     perModelStats,
@@ -50,22 +47,25 @@ export function App() {
     openrouter,
     apiKey
   );
+  // The edition's hosted rows: never in the OpenRouter list, so the vision
+  // resolver is told about them separately.
+  const hostedRows = useHostedPickerRows();
   // Null means "images go straight to the primary" — see
   // `resolveDefaultVisionModelId` for why that is the preferred answer.
   const defaultVisionModelId = useMemo(
-    () => resolveDefaultVisionModelId(models, modelPref),
-    [models, modelPref]
+    () => resolveDefaultVisionModelId(models, modelPref, hostedRows),
+    [models, modelPref, hostedRows]
   );
 
   // The primary's reasoning policy has to travel with the request: without
   // it "off" can only omit the parameter, which leaves reasoning on for
-  // every model that reasons by default. A.CRE Free's pinned model is not in
-  // the OpenRouter list (the sentinel isn't a real id), so its policy is
-  // resolved from the id the proxy actually runs.
+  // every model that reasons by default. A hosted tier's pinned model is not
+  // in the OpenRouter list (the sentinel isn't a real id), so its policy is
+  // resolved from the id the host actually runs.
   const reasoningPolicy = useMemo(() => {
     const primaryId = modelPref?.modelId;
     if (!primaryId) return undefined;
-    const lookupId = resolveOpenRouterModelId(primaryId);
+    const lookupId = resolveUpstreamModelId(edition.hostedModels, primaryId);
     return models.find((m) => m.id === lookupId)?.reasoningPolicy;
   }, [models, modelPref?.modelId]);
 
@@ -73,16 +73,16 @@ export function App() {
   // same single conversation.
   const stream = useAgentStream({
     modelId: modelPref?.modelId
-      ? resolveOpenRouterModelId(modelPref.modelId)
+      ? resolveUpstreamModelId(edition.hostedModels, modelPref.modelId)
       : null,
     reasoning: modelPref?.reasoning ?? "off",
     reasoningPolicy,
     subagentModelId: modelPref?.subagentModelId
-      ? resolveOpenRouterModelId(modelPref.subagentModelId)
+      ? resolveUpstreamModelId(edition.hostedModels, modelPref.subagentModelId)
       : null,
     visionModelId: defaultVisionModelId,
     summaryModelId: modelPref?.summaryModelId
-      ? resolveOpenRouterModelId(modelPref.summaryModelId)
+      ? resolveUpstreamModelId(edition.hostedModels, modelPref.summaryModelId)
       : null,
     maxTurns: modelPref?.maxTurns ?? null,
   });
@@ -128,11 +128,12 @@ export function App() {
     );
   }
 
-  // Drives three things in the session-info popover: the model row names the
-  // live pinned model, the session-cost label takes an asterisk, and the
-  // footnote appears — because on this tier that number is A.CRE's spend,
-  // not the user's.
-  const onAcreFree = isAcreFreeModel(modelPref?.modelId);
+  // Drives three things in the session-info popover when a hosted tier is
+  // running: the model row names the live pinned model, the session-cost
+  // label takes an asterisk, and the footnote appears — because on such a
+  // tier that number is the host's spend, not the user's.
+  const hostedRunning = hostedModelFor(edition.hostedModels, modelPref?.modelId);
+  const costNote = hostedRunning?.costNote;
 
   return (
     <div className="app">
@@ -217,8 +218,8 @@ export function App() {
             <div className="app-header__info-row">
               <span className="app-header__info-label">Model</span>
               <span className="app-header__info-value">
-                {onAcreFree ? (
-                  <AcreFreeModelName />
+                {hostedRunning ? (
+                  <hostedRunning.LiveName />
                 ) : modelPref?.modelId ? (
                   shortModel(modelPref.modelId)
                 ) : (
@@ -238,7 +239,7 @@ export function App() {
               {/* The asterisk points at the note below, which only exists
                   when someone else is paying. */}
               <span className="app-header__info-label">
-                Session cost{onAcreFree ? "*" : ""}
+                Session cost{costNote ? "*" : ""}
               </span>
               <span className="app-header__info-value app-header__info-value--cost">
                 {formatCost(sessionCost)}
@@ -264,12 +265,7 @@ export function App() {
             </div>
             {/* Last of the informational content, above the one control —
                 the number it annotates is three rows up. */}
-            {onAcreFree && (
-              <p className="app-header__info-note">
-                * Session cost paid for by A.CRE to help students and young professionals
-                learn to use AI in Excel.
-              </p>
-            )}
+            {costNote && <p className="app-header__info-note">{costNote}</p>}
             {sessionCost > 0 && (
               <button
                 type="button"
@@ -299,6 +295,7 @@ export function App() {
             onRequestReview={requestReview}
             apiKey={apiKey}
             modelPref={modelPref}
+            onOpenSettings={() => setView("settings")}
           />
         </div>
         <div className="app-view" hidden={view !== "capabilities"}>
@@ -327,22 +324,13 @@ export function App() {
 }
 
 /**
- * Its own component so the /health lookup that names the pinned model only
- * runs for users actually on A.CRE Free. Falls back to the bare tier name on
- * first paint and whenever the proxy is unreachable.
- */
-function AcreFreeModelName() {
-  const { modelLabel } = useAcreFreeInfo();
-  return <>{acreFreeLabel(modelLabel)}</>;
-}
-
-/**
  * Used for the per-model cost breakdown, whose keys are the RESOLVED
- * OpenRouter ids actually called — so the sentinel branch here is only for
+ * OpenRouter ids actually called — so the hosted branch here is only for
  * the rare caller that passes a stored pref id.
  */
 function shortModel(id: string): string {
-  if (isAcreFreeModel(id)) return ACRE_FREE_DISPLAY_NAME;
+  const hosted = hostedModelFor(edition.hostedModels, id);
+  if (hosted) return hosted.name;
   const parts = id.split("/");
   return parts[parts.length - 1] ?? id;
 }

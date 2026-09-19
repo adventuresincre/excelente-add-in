@@ -7,7 +7,7 @@ export interface ApiKeyFieldProps {
   onSave: (key: string) => Promise<void>;
   /** Clear from storage. */
   onClear: () => Promise<void>;
-  /** Replaces the default empty-state hint (e.g. when A.CRE Free is selected). */
+  /** Replaces the default empty-state hint (e.g. when a hosted tier is selected). */
   emptyHint?: ReactNode;
 }
 

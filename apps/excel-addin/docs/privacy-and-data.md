@@ -28,15 +28,8 @@ Attachments go too: images, rendered PDF pages, and spreadsheet contents when yo
 Excel to OpenRouter to the model provider you selected. **Nothing routes through CRE Edge.** There is
 no server of ours in the path.
 
-### On A.CRE Free
-
-Excel to the Excelente proxy at `excelente.aiedge.ac`, then to OpenRouter and the model provider. The
-proxy exists so A.CRE can pay for the request and apply a monthly limit per network address.
-
-**The proxy does not store or log workbook content, prompts, responses, or attachments.** It keeps a
-pseudonymous monthly cost ledger for the current and previous month, and rate-limit counters that
-expire in minutes. Standard web-server access logs record address, timestamp, path, and status, never
-request content.
+<!-- edition:include privacy-and-data/hosted-path -->
+<!-- /edition:include -->
 
 ### What happens at OpenRouter and the model provider
 
@@ -65,7 +58,8 @@ it. On a shared machine, use a key with a spend limit, and revoke it if the devi
 
 - We do not use your workbook content, prompts, attachments, or model outputs to train, fine-tune, or
   evaluate any model.
-- The A.CRE Free proxy does not store or log the content of your requests or responses.
+<!-- edition:include privacy-and-data/hosted-bullet -->
+<!-- /edition:include -->
 
 ## Workbook memory travels with the file
 

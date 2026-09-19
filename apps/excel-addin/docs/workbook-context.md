@@ -71,8 +71,8 @@ rejects the write and the agent gets the error back, then adapts or tells you.
 In BYOK mode, the workbook content the agent reads goes directly from Excel to OpenRouter and on to
 the model provider you selected. Nothing routes through CRE Edge.
 
-On A.CRE Free, requests transit the Excelente proxy so A.CRE can pay for them. They are not logged or
-retained there.
+<!-- edition:include workbook-context/hosted-path -->
+<!-- /edition:include -->
 
 Full detail is in [Privacy and data handling](/documentation/privacy-and-data/) and the
 [privacy policy](/privacy).

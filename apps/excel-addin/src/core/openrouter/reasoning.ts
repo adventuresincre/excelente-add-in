@@ -111,8 +111,8 @@ export function resolveEffort(level: OnLevel, policy?: ReasoningPolicy): string 
  * But a blanket `enabled: false` is not the fix either. 101 models make
  * reasoning mandatory and answer any explicit disable with HTTP 400
  * ("Reasoning is mandatory for this endpoint and cannot be disabled") — and
- * `z-ai/glm-5.3-flash`, the model A.CRE Free is pinned to, is one of them.
- * Sending it unconditionally would have failed every A.CRE Free request.
+ * `z-ai/glm-5.3-flash`, a shipped default for the summary role, is one of
+ * them. Sending it unconditionally would have failed every request to it.
  *
  * So Off is policy-dependent:
  *   - mandatory        → the WEAKEST rung the model offers. Reasoning cannot

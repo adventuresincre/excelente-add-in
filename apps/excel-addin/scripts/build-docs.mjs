@@ -36,12 +36,43 @@ import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 
 import { dirname, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Marked, Renderer } from "marked";
+import { editionDir, resolveEdition } from "./lib/edition.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const DIST = resolve(ROOT, "dist");
 const DOCS_SRC = resolve(ROOT, "docs");
 const OUT_DIR = resolve(DIST, "documentation");
+
+/**
+ * Edition-specific passages. The pages under docs/ are shared by every
+ * edition and describe what every edition has. Where an edition has more to
+ * say (a hosted model tier, say), the shared page carries a block
+ *
+ *   <!-- edition:include some/name -->
+ *   what every other edition shows here, possibly nothing
+ *   <!-- /edition:include -->
+ *
+ * and the edition provides `src/edition/<name>/docs/some/name.md`. When that
+ * file exists its contents replace the block; otherwise the block's own body
+ * stands. The markers sit on their own lines, and a block whose replacement
+ * is empty vanishes without leaving a blank line, so a table row or a list
+ * item can be edition-specific too.
+ */
+const EDITION = resolveEdition();
+const EDITION_DOCS = resolve(editionDir(EDITION), "docs");
+const INCLUDE_RE =
+  /^[ \t]*<!-- edition:include ([\w./-]+) -->[ \t]*\n([\s\S]*?)^[ \t]*<!-- \/edition:include -->[ \t]*\n?/gm;
+
+function resolveEditionIncludes(md, file) {
+  return md.replace(INCLUDE_RE, (_whole, name, fallback) => {
+    if (name.includes("..")) throw new Error(`${file}: bad include name ${name}`);
+    const path = resolve(EDITION_DOCS, `${name}.md`);
+    if (!existsSync(path)) return fallback;
+    const text = readFileSync(path, "utf8").replace(/\r\n/g, "\n");
+    return text.endsWith("\n") || text === "" ? text : `${text}\n`;
+  });
+}
 
 if (!existsSync(DIST)) {
   console.error("dist/ does not exist. Run `npm run build` first.");
@@ -157,10 +188,13 @@ function parseFrontmatter(raw, file) {
     data[key] = value;
   }
   for (const required of ["title", "description", "group", "order"]) {
-    if (!data[required]) throw new Error(`${file}: frontmatter missing required field: ${required}`);
+    if (!data[required])
+      throw new Error(`${file}: frontmatter missing required field: ${required}`);
   }
   if (!GROUPS.includes(data.group)) {
-    throw new Error(`${file}: unknown group "${data.group}". Expected one of: ${GROUPS.join(", ")}`);
+    throw new Error(
+      `${file}: unknown group "${data.group}". Expected one of: ${GROUPS.join(", ")}`
+    );
   }
   return { data, body: body.trimStart() };
 }
@@ -196,11 +230,13 @@ const slugify = (s) =>
  * point is to keep the index small, not to build a real stemmer.
  */
 const STOPWORDS = new Set(
-  ("a an the and or but if then than that this these those is are was were be been being do does did " +
+  (
+    "a an the and or but if then than that this these those is are was were be been being do does did " +
     "have has had of in on at to from by for with without into out up down over under again once " +
     "you your yours it its they them their there here what which who when where why how all any both " +
     "each few more most other some such no nor not only own same so too very can will just as i we " +
-    "one two three see also use used using get got make makes made way ways thing things").split(" ")
+    "one two three see also use used using get got make makes made way ways thing things"
+  ).split(" ")
 );
 
 /**
@@ -221,7 +257,11 @@ const STOPWORDS = new Set(
 function codePhrases(md) {
   const spans = new Set();
   for (const m of md.matchAll(/`([^`\n]{1,60})`/g)) {
-    const s = m[1].toLowerCase().replace(/[-_/]+/g, " ").replace(/[^a-z0-9. ]+/g, " ").trim();
+    const s = m[1]
+      .toLowerCase()
+      .replace(/[-_/]+/g, " ")
+      .replace(/[^a-z0-9. ]+/g, " ")
+      .trim();
     if (s.length >= 2) spans.add(s.replace(/\s+/g, " "));
   }
   return [...spans].join(" | ");
@@ -303,7 +343,16 @@ if (files.length === 0) {
 
 const pages = files.map((file) => {
   const raw = readFileSync(resolve(DOCS_SRC, file), "utf8");
-  const { data, body } = parseFrontmatter(raw, file);
+  const parsed = parseFrontmatter(raw, file);
+  const data = parsed.data;
+  // Resolved before anything reads the body, so the rendered page, the
+  // copy-page markdown and the search index all describe this edition.
+  const body = resolveEditionIncludes(parsed.body, file);
+  if (/<!--\s*\/?edition:include/.test(body)) {
+    throw new Error(
+      `${file}: an edition:include block is malformed (markers must sit on their own lines)`
+    );
+  }
   const name = basename(file, ".md");
   const slug = name === "index" ? "" : name;
   const { html, toc } = renderMarkdown(body);
@@ -1090,13 +1139,8 @@ const searchIndex = JSON.stringify(
     terms: p.terms,
   }))
 );
-writeFileSync(
-  resolve(OUT_DIR, "search-index.js"),
-  `window.__DOCS_INDEX__ = ${searchIndex};\n`
-);
-console.log(
-  `  dist/documentation/search-index.js  (${(searchIndex.length / 1024).toFixed(0)} KB)`
-);
+writeFileSync(resolve(OUT_DIR, "search-index.js"), `window.__DOCS_INDEX__ = ${searchIndex};\n`);
+console.log(`  dist/documentation/search-index.js  (${(searchIndex.length / 1024).toFixed(0)} KB)`);
 
 // The index gets its hand-written body, then the generated card grid.
 const indexToc = byGroup.map(({ group }) => ({ id: slugify(group), text: group, depth: 2 }));

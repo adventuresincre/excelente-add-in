@@ -1,7 +1,6 @@
 export { createOpenRouterClient, OpenRouterError, translateStream } from "./client";
 export { describeOpenRouterError, parseOpenRouterError } from "./error-message";
 export type { OpenRouterClient, ClientOptions } from "./client";
-export { createAcreFreeClient } from "./acre-free-client";
 export { parseSseLines } from "./sse";
 export {
   effortLadder,

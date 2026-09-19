@@ -506,11 +506,15 @@ function toReasoningPolicy(raw: unknown): ModelInfo["reasoningPolicy"] {
 }
 
 function authHeaders(apiKey: string): Record<string, string> {
-  return {
-    Authorization: `Bearer ${apiKey}`,
+  const headers: Record<string, string> = {
     "HTTP-Referer": REFERER,
     "X-Title": TITLE,
   };
+  // OpenRouter's model list is public. A pane with no key reads it to show
+  // the whole catalogue (2026-09-15); sending "Bearer " with nothing after
+  // it would be rejected where sending no header is accepted.
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  return headers;
 }
 
 async function safeText(response: Response): Promise<string> {

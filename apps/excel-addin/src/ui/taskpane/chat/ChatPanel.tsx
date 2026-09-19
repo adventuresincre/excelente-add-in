@@ -19,15 +19,13 @@ import type { PlanItem, ToolItem, TurnItem, UseAgentStream } from "./useAgentStr
 import { useExcelSelection } from "./useExcelSelection";
 import type { ModelPref } from "../../../core/storage";
 import { BUILTIN_COMMANDS, type SlashCommand } from "../../../core/commands";
-import {
-  acreFreeLabel,
-  isAcreFreeModel,
-  isSetupComplete,
-  resolveOpenRouterModelId,
-} from "../../../core/config";
-import { useAcreFreeInfo } from "../useAcreFreeInfo";
+import { isSetupComplete } from "../../../core/config";
+import { edition } from "@edition";
+import { hostedModelFor, resolveUpstreamModelId } from "../../../edition/hosted";
 import { ConnectSetup } from "./ConnectSetup";
 import "./chat.css";
+import { PendingModelNotice, focusApiKeyField, pendingModelName } from "../pending-model";
+import { useModels } from "../settings/useModels";
 
 /**
  * Prompt sent to the agent when the user types `/init`. Drives an Explore
@@ -77,7 +75,10 @@ interface ChatPanelProps {
   onPromoteToWork: () => void;
   onRequestReview: () => void;
   apiKey: string | null;
+  /** The RUNNING preference (App passes `runningModelPref`). */
   modelPref: ModelPref | null;
+  /** Open the Settings tab — the waiting-model notice and chip point there. */
+  onOpenSettings: () => void;
 }
 
 export function ChatPanel({
@@ -90,11 +91,30 @@ export function ChatPanel({
   onRequestReview,
   apiKey,
   modelPref,
+  onOpenSettings,
 }: ChatPanelProps) {
-  const { openrouter, sessionCost } = useApp();
+  const { openrouter, sessionCost, pendingModelId, setModelPref } = useApp();
   const composerRef = useRef<ComposerHandle>(null);
   const selection = useExcelSelection();
   const setupComplete = isSetupComplete(apiKey, modelPref?.modelId ?? null);
+
+  // The chosen model that cannot run yet, named for the notice and the chip.
+  // The list is public and cached an hour, so this rides on Settings' fetch.
+  const { models: catalogue } = useModels(openrouter, apiKey);
+  const pendingName = pendingModelId ? pendingModelName(catalogue, pendingModelId) : null;
+  // The edition's keyless fallback (a hosted tier), or null when a waiting
+  // choice has nothing to run on and only a key can unlock the chat.
+  const fallback = edition.keylessFallback;
+  const useFallback = useCallback(() => {
+    if (fallback) void setModelPref(fallback.modelPref());
+  }, [setModelPref, fallback]);
+  // Switch to Settings, then put the cursor in the key field once that view
+  // has painted. All views stay mounted, so the field exists immediately;
+  // the frame wait is for the scroll to land on something visible.
+  const addKey = useCallback(() => {
+    onOpenSettings();
+    requestAnimationFrame(() => focusApiKeyField());
+  }, [onOpenSettings]);
 
   // The plan sheet slides over the transcript rather than living on its own
   // tab: a plan is what you watch WHILE the agent works, and a tab makes
@@ -234,7 +254,7 @@ export function ChatPanel({
       .then((models) => {
         if (cancelled) return;
         const found = models.find(
-          (m) => m.id === resolveOpenRouterModelId(modelPref.modelId)
+          (m) => m.id === resolveUpstreamModelId(edition.hostedModels, modelPref.modelId)
         );
         setSupportsVision(found?.supportsVision ?? false);
       })
@@ -296,10 +316,17 @@ export function ChatPanel({
     setStuckToBottom(true);
   }, []);
 
-  // A.CRE Free carries no key — A.CRE's proxy supplies one server-side —
-  // so "set up" is exactly isSetupComplete and nothing else.
-  const disabled = !setupComplete;
-  const disabledHint = "Finish setup above to begin.";
+  // A hosted tier carries no key — its host supplies one server-side — so
+  // "set up" is exactly isSetupComplete and nothing else.
+  // Spencer, 2026-09-15 (after testing): a chosen model that is waiting on a
+  // key LOCKS the composer. The notice above it is the only way forward: add
+  // a key, or (where the edition has one) stay on the fallback. Nothing is
+  // sent to any model in between.
+  const locked = Boolean(pendingName);
+  const disabled = !setupComplete || locked;
+  const disabledHint = locked
+    ? `${pendingName} needs an OpenRouter key. Add one${fallback ? `, or stay on ${fallback.name}` : ""}.`
+    : "Finish setup above to begin.";
 
   const onDragEnter = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
@@ -386,10 +413,13 @@ export function ChatPanel({
       >
         {/* The wizard renders whenever setup is incomplete — INCLUDING over a
             restored transcript. Gating it on an empty transcript once locked
-            the composer with a hint pointing at UI that never appeared. */}
-        {!setupComplete && <ConnectSetup />}
+            the composer with a hint pointing at UI that never appeared. The
+            one exception: a choice waiting on a key with nothing to run on
+            (no fallback in this edition). The notice below is the way
+            forward there, and two prompts for one key would compete. */}
+        {!setupComplete && !pendingName && <ConnectSetup />}
         {setupComplete && stream.items.length === 0 && !stream.error && (
-          <EmptyState modelId={modelPref?.modelId ?? null} />
+          <EmptyState modelId={modelPref?.modelId ?? null} locked={locked} />
         )}
         {stream.items.map((item) => (
           <ItemView
@@ -406,6 +436,17 @@ export function ChatPanel({
             reason={pauseReason}
             onContinue={() => void stream.send("Continue")}
             onDismiss={() => setPauseDismissed(true)}
+          />
+        )}
+        {/* At the foot of the transcript, empty or not, so the two ways out are
+            always beside the locked composer. */}
+        {pendingName && (
+          <PendingModelNotice
+            modelName={pendingName}
+            surface="chat"
+            onAddKey={addKey}
+            fallbackName={fallback ? <fallback.LiveName /> : undefined}
+            onUseFallback={fallback ? useFallback : undefined}
           />
         )}
         {stream.error && (
@@ -507,6 +548,7 @@ export function ChatPanel({
         canUndo={stream.canUndo}
         onUndo={() => void handleUndo()}
         onOpenCapabilities={onOpenCapabilities}
+        pendingModel={pendingName ? { name: pendingName, onOpenSettings } : undefined}
       />
 
       {/* Over the panel rather than beside it, on the same absolute-overlay
@@ -613,8 +655,20 @@ function isChangeCardItem(item: TurnItem): item is ToolItem {
   );
 }
 
-function EmptyState({ modelId }: { modelId: string | null }) {
-  const acre = isAcreFreeModel(modelId);
+function EmptyState({
+  modelId,
+  locked,
+}: {
+  modelId: string | null;
+  /**
+   * A chosen model is waiting on a key and the composer is locked. Only the
+   * mark and the headline show; the notice at the foot of the transcript
+   * carries the two ways forward. The model line and the "ask about this
+   * workbook" hint describe a chat that can happen, so they wait too.
+   */
+  locked: boolean;
+}) {
+  const hosted = hostedModelFor(edition.hostedModels, modelId);
   return (
     <div className="chat-panel__empty">
       <BrandMark />
@@ -623,40 +677,24 @@ function EmptyState({ modelId }: { modelId: string | null }) {
         <br />
         in your workbook.
       </h2>
-      {acre ? (
-        <AcreFreeIntro />
-      ) : (
-        <p>
-          You&apos;re talking to <code>{modelId}</code>.
+      {!locked &&
+        (hosted ? (
+          <hosted.ChatIntro />
+        ) : (
+          <p>
+            You&apos;re talking to <code>{modelId}</code>.
+          </p>
+        ))}
+      {!locked && (
+        <p className="chat-panel__empty-hint">
+          Ask about this workbook, attach images or PDFs, or request a change. Write tools require
+          your approval.
         </p>
       )}
-      <p className="chat-panel__empty-hint">
-        Ask about this workbook, attach images or PDFs, or request a change. Write tools require
-        your approval.
-      </p>
     </div>
   );
 }
 
-
-/**
- * Its own component so the /health lookup only happens for users actually
- * on A.CRE Free — a hook here would fire it for every BYOK user too.
- * `modelLabel` is null on first paint and whenever the proxy is
- * unreachable, and the sentence then reads "You're using A.CRE Free." —
- * true, just less specific.
- */
-function AcreFreeIntro() {
-  const { modelLabel } = useAcreFreeInfo();
-  return (
-    <p>
-      You&apos;re using{" "}
-      <span className="connect-setup__nowrap">{acreFreeLabel(modelLabel)}</span>. A.CRE
-      covers the cost of this basic model to make AI in Excel accessible to students /
-      learners. Please don&apos;t abuse it.
-    </p>
-  );
-}
 
 function BrandMark() {
   return (

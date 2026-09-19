@@ -20,7 +20,9 @@ on any Excel workbook.
 If you have never opened Excelente, three pages get you working:
 
 1. [Install Excelente](/documentation/install/), about a minute from the Marketplace or from inside Excel.
-2. [Connect a model](/documentation/connect-a-model/), either A.CRE Free with no account at all, or your own OpenRouter key.
+<!-- edition:include index/connect-step -->
+2. [Connect a model](/documentation/connect-a-model/) with your own OpenRouter key.
+<!-- /edition:include -->
 3. [Quickstart](/documentation/quickstart/), a first real task from prompt to finished build.
 
 ## Copying a page into your agent

@@ -145,9 +145,11 @@ The screenshot tool deserves a mention. `Range.getImage()` renders cells without
 
 ## What Is Not in This Repository
 
-The hosted service at excelente.aiedge.ac runs from a private repository that adds the deployment tooling, the landing page, the terms and privacy pages, the marketplace submission material, and the server-side pieces that hold our own API keys.
+Excelente ships in editions. This repository is the **community edition**: the whole shared code base plus `apps/excel-addin/src/edition/community/`, which is the edition that brings its own OpenRouter key and hosts no models of its own. First run opens on **Connect your model**, and once a key is in, everything works.
 
-Nine of the bundled CRE skills are also absent. They incorporate methodology licensed to us by [CRE Agents, Inc.](https://www.creagents.com) under terms that cover use of the add-in but not redistribution, so we cannot put them here. The skill loader globs whatever is present, so nothing breaks. See [apps/excel-addin/skills/LICENSE.md](apps/excel-addin/skills/LICENSE.md).
+The hosted service at excelente.aiedge.ac runs from a private repository that adds a second edition folder and the pieces around it: the deployment tooling, the landing page, the terms and privacy pages, the marketplace submission material, and the server-side services that hold our own API keys. The shared code is identical; a build picks one edition folder and contains nothing from the other. `CLAUDE.md` describes the seam and the check that keeps it honest.
+
+Nine of the bundled CRE skills are also absent. They incorporate methodology licensed to us by [CRE Agents, Inc.](https://www.creagents.com) under terms that cover use of the add-in but not redistribution, so they ship only in the hosted edition. See [apps/excel-addin/skills/LICENSE.md](apps/excel-addin/skills/LICENSE.md).
 
 What is here is the add-in: the whole harness, the agent, the Excel tool layer, the UI, and the five method skills that are wholly ours.
 

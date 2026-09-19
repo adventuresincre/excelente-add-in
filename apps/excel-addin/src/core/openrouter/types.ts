@@ -53,6 +53,14 @@ export interface ModelInfo {
   id: string;
   name: string;
   description?: string;
+  /**
+   * Set on a row the edition injects rather than one OpenRouter listed: a
+   * model the distribution hosts itself, with its own client and a
+   * server-side pin. `name` is final (no lab prefix to strip, no price or
+   * rank to append), `lab` is the host, and the row sits in its own picker
+   * group before every lab. Never sent to OpenRouter.
+   */
+  hosted?: { lab: string; groupKey: string; groupLabel: string };
   contextLength: number;
   pricing: {
     /** USD per 1 prompt token. */
@@ -72,8 +80,8 @@ export interface ModelInfo {
    * reasoning tokens they had switched off. Meanwhile 101 models make
    * reasoning mandatory and answer an explicit disable with HTTP 400
    * ("Reasoning is mandatory for this endpoint and cannot be disabled"),
-   * A.CRE Free's own pinned model among them — so a blanket disable is not
-   * an option either. Both facts are only knowable from here.
+   * z-ai/glm-5.3-flash among them — so a blanket disable is not an option
+   * either. Both facts are only knowable from here.
    */
   reasoningPolicy?: {
     /** Reasoning cannot be turned off; an explicit disable is a 400. */

@@ -15,7 +15,10 @@ import type { ExplorerSort } from "./model-metrics";
 import { useModels } from "./useModels";
 import type { ReasoningLevel } from "../../../core/storage";
 import type { ModelInfo } from "../../../core/openrouter";
-import { acreFreeModelPref, DEFAULT_PUBLIC_CONFIG, isAcreFreeModel } from "../../../core/config";
+import { DEFAULT_PUBLIC_CONFIG } from "../../../core/config";
+import { edition, useHostedPickerRows } from "@edition";
+import { hostedModelFor } from "../../../edition/hosted";
+import { PendingModelNotice, focusApiKeyField, pendingModelName } from "../pending-model";
 
 type Role = "primary" | "subagent" | "vision" | "summary";
 
@@ -41,9 +44,14 @@ type Role = "primary" | "subagent" | "vision" | "summary";
  * `useModels`; without them everything still renders, minus the numbers.
  */
 export function ModelsSection({ sections = "all" }: { sections?: "primary" | "advanced" | "all" }) {
-  const { apiKey, modelPref, setModelPref, openrouter } = useApp();
+  const { apiKey, modelPref, setModelPref, openrouter, pendingModelId } = useApp();
   const { models, loading, error } = useModels(openrouter, apiKey);
   const [explorer, setExplorer] = useState<Role | null>(null);
+  // The edition's own rows (a hosted tier), and the one that runs when a
+  // keyless choice waits. Both empty/null in the community edition.
+  const hostedRows = useHostedPickerRows();
+  const hosted = edition.hostedModels;
+  const fallback = edition.keylessFallback;
 
   const currentModelId = modelPref?.modelId ?? null;
   const currentReasoning: ReasoningLevel = modelPref?.reasoning ?? "off";
@@ -76,8 +84,8 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
    * model is blind on the strength of a list that hasn't arrived.
    */
   const primaryIsBlind = useMemo(
-    () => primarySupportsVision(models, currentModelId) === false,
-    [models, currentModelId]
+    () => primarySupportsVision(models, currentModelId, hostedRows) === false,
+    [models, currentModelId, hostedRows]
   );
 
   const selectedPrimary = useMemo(
@@ -99,19 +107,20 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
 
   async function handlePrimaryChange(modelId: string) {
     if (!modelId) return;
-    if (isAcreFreeModel(modelId)) {
-      await setModelPref(acreFreeModelPref(DEFAULT_PUBLIC_CONFIG.byokDefaults));
+    const target = hostedModelFor(hosted, modelId);
+    if (target) {
+      await setModelPref(target.modelPref());
       return;
     }
-    // Leaving A.CRE Free drops its pinned role ids; any other switch keeps
-    // the user's subagent/vision/summary picks exactly as they were.
-    const leavingAcreFree = isAcreFreeModel(currentModelId);
+    // Leaving a hosted model drops its pinned role ids; any other switch
+    // keeps the user's subagent/vision/summary picks exactly as they were.
+    const leavingHosted = hostedModelFor(hosted, currentModelId) !== null;
     await setModelPref({
       modelId,
       reasoning: currentReasoning,
-      subagentModelId: leavingAcreFree ? undefined : (subagentOverride ?? undefined),
-      visionModelId: leavingAcreFree ? undefined : (visionOverride ?? undefined),
-      summaryModelId: leavingAcreFree ? undefined : (summaryOverride ?? undefined),
+      subagentModelId: leavingHosted ? undefined : (subagentOverride ?? undefined),
+      visionModelId: leavingHosted ? undefined : (visionOverride ?? undefined),
+      summaryModelId: leavingHosted ? undefined : (summaryOverride ?? undefined),
       maxTurns: modelPref?.maxTurns ?? DEFAULT_PUBLIC_CONFIG.byokDefaults.maxTurns,
     });
   }
@@ -152,9 +161,13 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
     });
   }
 
+  const hostedPrimary = hostedModelFor(hosted, currentModelId);
   const showPrimary = sections === "all" || sections === "primary";
   const showAdvanced = sections === "all" || sections === "advanced";
-  const canExplore = Boolean(apiKey) && !loading && !error && models.length > 0;
+  // The list is public, so comparing is open to everyone; a keyless pick
+  // waits for a key rather than being refused (pending-model).
+  const canExplore = !loading && !error && models.length > 0;
+
 
   const explorerProps = (() => {
     switch (explorer) {
@@ -165,6 +178,7 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
           value: currentModelId,
           onSelect: (id: string) => void handlePrimaryChange(id),
           initialSort: "capability" as ExplorerSort,
+          needsKey: !apiKey,
         };
       case "subagent":
         return {
@@ -212,10 +226,17 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
       {showPrimary && (
         <section className="settings-section">
           <h2 className="settings-section__title">Primary model</h2>
-          {/* A.CRE Free is described in exactly one place — its own section,
-              which renders only when it applies — so this hint is about
-              reading the list, nothing else. */}
+          {/* A hosted tier is described in exactly one place — the edition's
+              own Settings section, which renders only when it applies — so
+              this hint is about reading the list, nothing else. */}
           <p className="settings-section__hint">
+            {!apiKey && (
+              <>
+                {hosted.length > 0
+                  ? `Everything except ${hosted.map((h) => h.name).join(" and ")} needs an OpenRouter key; pick one anyway and it waits for the key.`
+                  : "Every model needs an OpenRouter key; pick one anyway and it waits for the key."}{" "}
+              </>
+            )}
             The <strong>#number</strong> after a model is its <strong>capability rank</strong> among
             the models listed here, from independent benchmarks (Artificial Analysis): #1 is the
             most capable. The two Top 10 lists cover only models that can use tools, reason and see
@@ -237,6 +258,15 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
               reasoning={currentReasoning}
             />
           )}
+          {pendingModelId && (
+            <PendingModelNotice
+              modelName={pendingModelName(toolModels, pendingModelId)}
+              surface="settings"
+              onAddKey={focusApiKeyField}
+              fallbackName={fallback ? <fallback.LiveName /> : undefined}
+              onUseFallback={fallback ? () => void handlePrimaryChange(fallback.id) : undefined}
+            />
+          )}
           {compareButton("primary")}
           {/* Only when the list actually says so — see `primaryIsBlind`. The
               agent screenshots the sheet to verify its own writes, so a blind
@@ -255,20 +285,20 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
 
       {/* Gated on the KEY, not on the primary model. Whether you can choose
           a model per role depends on whether you can pay for one; it has
-          nothing to do with what the primary happens to be. With A.CRE Free
-          as primary and a key on file, an override here runs on YOUR key
-          while the primary loop stays on A.CRE's — see `roleOverride` and
-          `OrchestratorDeps.roleClient`. With no key there is nothing to
+          nothing to do with what the primary happens to be. With a hosted
+          tier as primary and a key on file, an override here runs on YOUR
+          key while the primary loop stays on the host's — see `roleOverride`
+          and `OrchestratorDeps.roleClient`. With no key there is nothing to
           route to, and SettingsPanel hides Advanced entirely. */}
       {showAdvanced && (
         <>
-          {isAcreFreeModel(currentModelId) && (
+          {hostedPrimary && (
             <section className="settings-section">
               <h2 className="settings-section__title">Role models</h2>
               <p className="settings-section__hint">
-                Your primary is A.CRE Free, so every role runs on the A.CRE-selected model unless
-                you override it below. An override runs on your own OpenRouter key and is billed to
-                you.
+                Your primary is {hostedPrimary.name}, so every role runs on the model it is pinned
+                to unless you override it below. An override runs on your own OpenRouter key and is
+                billed to you.
               </p>
             </section>
           )}
@@ -402,9 +432,10 @@ function ModelPickerWithDefault({
     );
   }
 
-  // Role pickers never offer A.CRE Free: picking it here on a paid primary
-  // would route the free model through the user's own key under a free label.
-  const { groups, ranks } = buildPicker(models, undefined, { includeAcreFree: false });
+  // Role pickers never offer a hosted row: picking one here on a paid
+  // primary would route the host's model through the user's own key under
+  // the host's label.
+  const { groups, ranks } = buildPicker(models);
 
   return (
     <select

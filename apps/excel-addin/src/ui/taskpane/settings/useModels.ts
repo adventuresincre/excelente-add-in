@@ -10,9 +10,10 @@ export interface UseModelsResult {
 }
 
 /**
- * Fetches the OpenRouter model list once the API key is known and merges in
- * the nightly capability catalog. Returns empty list + null error when apiKey
- * is null.
+ * Fetches the OpenRouter model list and merges in the nightly capability
+ * catalog. The list is public, so this runs with or without a key: a user
+ * without one sees the whole catalogue and can choose a model that waits for
+ * a key (Spencer, 2026-09-15; see `ui/taskpane/pending-model`).
  *
  * The two fetches run in parallel and only the OpenRouter one can fail the
  * hook: the catalog resolves null when unavailable and the list then simply
@@ -26,19 +27,12 @@ export function useModels(client: OpenRouterClient, apiKey: string | null): UseM
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    if (!apiKey) {
-      setModels([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
     let cancelled = false;
     setLoading(true);
     setError(null);
 
     const force = tick > 0;
-    Promise.all([client.listModels(apiKey, { force }), fetchModelCatalog({ force })])
+    Promise.all([client.listModels(apiKey ?? "", { force }), fetchModelCatalog({ force })])
       .then(([list, catalog]) => {
         if (cancelled) return;
         setModels(enrichModels(list, catalog));

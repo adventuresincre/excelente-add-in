@@ -1,43 +1,16 @@
 ---
 title: Connect a model
-description: Start on A.CRE Free with no account at all, or bring an OpenRouter key and pick from hundreds of models.
+description: Bring an OpenRouter key and pick from hundreds of models. Excelente does not ship a model of its own.
 group: First steps
 order: 2
 ---
 
-Excelente does not ship its own model. You choose one, and there are two ways to get connected.
+<!-- edition:include connect-a-model/ways -->
+Excelente does not ship its own model. You bring an OpenRouter key, and one key reaches hundreds of
+models. The first screen you see is **Connect your model**; paste the key there and you are working.
 
-| | A.CRE Free | Your own OpenRouter key |
-|---|---|---|
-| Account needed | None | An OpenRouter account |
-| Who pays | A.CRE | You, billed by OpenRouter |
-| Model choice | One model, selected by A.CRE | Hundreds, switchable mid-conversation |
-| Reasoning control | Fixed at medium | Off, Low, Medium, High |
-| Sub-agent and vision model overrides | Not available | Available |
-| Good for | Trying it out, students, learners | Everything else |
-
-## A.CRE Free
-
-Pick **Use A.CRE Free, no key or sign-in** in the setup flow and you are working immediately. No
-email, no key, no account.
-
-A.CRE pays for a capable lower-cost model so students, learners, and anyone curious can see what an
-AI agent inside Excel actually does. It carries limits to keep shared usage sane, and A.CRE may
-change the model or end the offer at any point. Your workbook is sent to the model to do the work
-and is not used to train it.
-
-On A.CRE Free every role runs on the same A.CRE-selected model: the primary agent, sub-agents, the
-Reviewer, and vision. Reasoning is fixed at medium, and the Advanced settings section stays hidden,
-since none of its controls apply.
-
-The model behind A.CRE Free is not baked into the add-in. Excelente asks the proxy which model is
-live and shows you the name, so the label reads something like **A.CRE Free (GLM 5.3 Flash)** and
-stays right when A.CRE repoints it.
-
-When you are ready for better work, add a key. Excelente will say so too: the Settings panel nudges
-you toward one once you are past experimenting.
-
-## Your own OpenRouter key
+## OpenRouter
+<!-- /edition:include -->
 
 OpenRouter is a single API in front of most commercial models, so one key reaches Claude, GPT,
 Gemini, Grok, Llama, DeepSeek, Qwen, Kimi, and GLM. You pay OpenRouter directly at its published
@@ -64,21 +37,24 @@ over it.
 
 ## The setup flow
 
-First launch walks four steps inside the Chat tab.
+<!-- edition:include connect-a-model/setup-flow -->
+First launch walks three steps inside the Chat tab.
 
-1. **Start.** Choose an OpenRouter key or A.CRE Free. Choosing A.CRE Free shows a short disclosure
-   about the shared limits before it continues.
-2. **Key.** Paste your OpenRouter key. Skipped on A.CRE Free.
-3. **Model.** Pick your primary model. See [Choosing a model](/documentation/choosing-a-model/).
-4. **Connectors.** Turn on CRE Agents or the A.CRE Intelligence Hub if you use them. You can skip
+1. **Connect your model.** OpenRouter is the provider on offer today. Paste your key.
+2. **Model.** Pick your primary model. See [Choosing a model](/documentation/choosing-a-model/).
+3. **Connectors.** Turn on CRE Agents or the A.CRE Intelligence Hub if you use them. You can skip
    this and add them later under Capabilities.
+<!-- /edition:include -->
 
 The composer stays disabled until setup is complete, showing **Finish setup above to begin**.
 
 ## Switching later
 
-Everything here is reversible from **Settings**. Add a key on top of A.CRE Free and the Advanced
-section appears. Clear your key and A.CRE Free is offered again. Nothing is locked in at setup.
+<!-- edition:include connect-a-model/switching -->
+Everything here is reversible from **Settings**: paste a different key over the old one, clear it,
+or change the model. Clearing the key keeps your model choice and pauses chat until a key is back.
+Nothing is locked in at setup.
+<!-- /edition:include -->
 
 ## What about signing in with an A.CRE account
 

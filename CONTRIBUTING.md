@@ -25,14 +25,16 @@ you would expect too.
 3. Run the gates from `apps/excel-addin/`:
 
    ```bash
+   npm run check:boundary
    npm run typecheck
    npm test
    npm run lint
    npm run build
    ```
 
-   All four must pass. If you touched `manifest.template.xml`, also run
-   `npm run validate`.
+   All five must pass. If you touched `manifest.template.xml`, also run
+   `npm run validate`. `check:boundary` guards the edition seam described in
+   CLAUDE.md; a change under `src/core/` that imports `@edition` fails it.
 
 4. Open the pull request with a test plan. See below.
 5. Expect review comments. I read every one of these, but I am not always fast.

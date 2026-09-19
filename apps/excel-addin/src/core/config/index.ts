@@ -14,18 +14,7 @@ export type {
 } from "./types";
 export { DEFAULT_PUBLIC_CONFIG, DEFAULT_INTEL_HUB_API_BASE } from "./defaults";
 export { resolveByokDefaults } from "./resolve-byok-defaults";
-export {
-  ACRE_FREE_DISPLAY_NAME,
-  ACRE_FREE_ENDPOINT,
-  ACRE_FREE_OPENROUTER_ID,
-  ACRE_FREE_SENTINEL_ID,
-  acreFreeLabel,
-  acreFreeModelPref,
-  isAcreFreeModel,
-  isSetupComplete,
-  prettyModelName,
-  resolveOpenRouterModelId,
-} from "./acre-free";
+export { isSetupComplete } from "./setup";
 export {
   createConfigCache,
   isStale,

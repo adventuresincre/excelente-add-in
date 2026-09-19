@@ -35,6 +35,7 @@ import { CapabilityMenu, type CapabilitySection } from "./CapabilityMenu";
 import { SpreadsheetDecisionCard } from "./SpreadsheetDecisionCard";
 import { ACRE_MCP_PRESETS, type McpServerStatus } from "../../../core/mcp";
 import { connectorButtons } from "./connector-buttons";
+import { PendingModelChip } from "../pending-model";
 
 export interface ComposerProps {
   onSend: (
@@ -77,6 +78,12 @@ export interface ComposerProps {
    * links in the "+" (connectors & skills) popover.
    */
   onOpenCapabilities: (section: CapabilitySection) => void;
+  /**
+   * A chosen model that is waiting on an OpenRouter key (pending-model).
+   * Rendered as a chip beside the mode pill so the state survives once the
+   * empty-state notice has scrolled away.
+   */
+  pendingModel?: { name: string; onOpenSettings: () => void };
 }
 
 /**
@@ -138,6 +145,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     canUndo,
     onUndo,
     onOpenCapabilities,
+    pendingModel,
   },
   ref
 ) {
@@ -837,6 +845,12 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         >
           <UndoIcon />
         </button>
+        {pendingModel && (
+          <PendingModelChip
+            modelName={pendingModel.name}
+            onOpenSettings={pendingModel.onOpenSettings}
+          />
+        )}
         {brandButtons.length > 0 && <span className="composer__brand-sep" aria-hidden="true" />}
         {brandButtons.map((b) => (
           <button
