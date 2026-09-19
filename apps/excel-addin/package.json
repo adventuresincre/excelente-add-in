@@ -1,6 +1,6 @@
 {
   "name": "excelente-excel-addin",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "private": true,
   "license": "Apache-2.0",
   "author": "CRE Edge, LLC (https://aiedge.ac)",
@@ -20,6 +20,7 @@
     "build:dev": "vite build --mode development",
     "manifest:dev": "node scripts/build-manifest.mjs",
     "manifest:prod": "node scripts/build-manifest.mjs --out dist/manifest.xml",
+    "build:pages": "node scripts/build-pages.mjs",
     "build:version": "node scripts/build-version.mjs",
     "preview": "vite preview --port 3000",
     "watch": "vite build --watch",
@@ -31,9 +32,11 @@
     "prettier": "office-addin-lint prettier",
     "signin": "office-addin-dev-settings m365-account login",
     "signout": "office-addin-dev-settings m365-account logout",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "typecheck": "node scripts/edition.mjs typecheck",
+    "test": "node scripts/edition.mjs test",
+    "test:watch": "vitest",
+    "check:boundary": "node scripts/check-edition-boundary.mjs",
+    "edition": "node scripts/edition.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.1",
@@ -71,9 +74,9 @@
     "last 2 firefox versions",
     "last 2 safari versions"
   ],
-  "description": "AI-first Excel add-in for financial modeling. Bring your own model, full workbook context, agentic tool use.",
   "homepage": "https://excelente.aiedge.ac",
   "bugs": {
     "url": "https://github.com/adventuresincre/excelente-add-in/issues"
-  }
+  },
+  "description": "AI-first Excel add-in for financial modeling. Bring your own model, full workbook context, agentic tool use."
 }

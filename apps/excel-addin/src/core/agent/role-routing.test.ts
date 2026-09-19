@@ -93,8 +93,8 @@ function run(opts: {
 }
 
 /**
- * The A.CRE Free asymmetry: `client` is A.CRE's proxy (no credential, model
- * pinned server-side), so a role override sent there would be silently
+ * The hosted-tier asymmetry: `client` is the host's proxy (no credential,
+ * model pinned server-side), so a role override sent there would be silently
  * replaced by the pin. These cases pin down who gets called with what.
  */
 describe("orchestrator role routing", () => {

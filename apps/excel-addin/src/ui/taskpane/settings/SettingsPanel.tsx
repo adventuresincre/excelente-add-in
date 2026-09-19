@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../AppProvider";
 import { useModels } from "./useModels";
-import { resolveOpenRouterModelId } from "../../../core/config";
+import { edition } from "@edition";
+import { resolveUpstreamModelId } from "../../../edition/hosted";
 import { ApiKeyField } from "./ApiKeyField";
 import { ModelsSection } from "./ModelsSection";
 import { ReasoningSlider } from "./ReasoningSlider";
 import type { ReasoningLevel } from "../../../core/storage";
-import { acreFreeLabel, isAcreFreeModel } from "../../../core/config";
-import { useAcreFreeInfo } from "../useAcreFreeInfo";
 import { APP_VERSION, BUILD_SHA, BUILD_ID, buildDate, checkForUpdate } from "../../../core/version";
 import "./settings.css";
 
@@ -51,14 +50,13 @@ export function SettingsPanel() {
   const { models } = useModels(openrouter, apiKey);
   const reasoningPolicy = useMemo(() => {
     if (!currentModelId) return undefined;
-    // A.CRE Free's sentinel is not a real OpenRouter id; resolve to the
-    // model the proxy actually runs so its policy (mandatory) is honoured.
-    const lookupId = resolveOpenRouterModelId(currentModelId);
+    // A hosted tier's sentinel is not a real OpenRouter id; resolve to the
+    // model the host actually runs so its policy (mandatory) is honoured.
+    const lookupId = resolveUpstreamModelId(edition.hostedModels, currentModelId);
     return models.find((m) => m.id === lookupId)?.reasoningPolicy;
   }, [models, currentModelId]);
   const currentReasoning: ReasoningLevel = modelPref?.reasoning ?? "off";
   const currentPace = modelPref?.maxTurns ?? DEFAULT_PACE;
-  const acreFree = isAcreFreeModel(currentModelId);
 
   // Persist a model-pref change while preserving every other field — the
   // earlier version dropped summaryModelId / maxTurns whenever reasoning
@@ -85,10 +83,10 @@ export function SettingsPanel() {
           onSave={setApiKey}
           onClear={clearApiKey}
           emptyHint={
-            acreFree && !apiKey ? (
+            !apiKey ? (
               <>
-                Not a student / learner? Add an OpenRouter key and make Excelente far more capable
-                than A.CRE Free. Get one at{" "}
+                One key unlocks every model below, from free to frontier, plus reasoning effort
+                and role models. Get one at{" "}
                 <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">
                   openrouter.ai/keys
                 </a>
@@ -99,16 +97,28 @@ export function SettingsPanel() {
         />
       </section>
 
-      {/* Only speak about A.CRE Free when it is actually relevant: someone
-          on their own key who has not chosen it does not need the pitch
-          every time they open Settings. With no key it always applies —
-          that is what they are running. */}
-      {(!apiKey || acreFree) && <AcreFreeSection selected={acreFree} />}
+      {/* The edition's own section (a hosted tier's explainer, say). It
+          decides its own visibility from the key and the chosen model, so a
+          BYOK user who has not chosen the tier is not pitched every time
+          they open Settings. */}
+      {edition.SettingsSection && (
+        <edition.SettingsSection apiKey={apiKey} currentModelId={currentModelId} />
+      )}
 
       <ModelsSection sections="primary" />
 
-      {/* No key means no choices to make here: A.CRE Free supplies every
-          role, and the pinned model does not take a reasoning effort. An
+      {/* The Advanced accordion is hidden without a key (nothing in it is
+          actionable without one). Say so in one line, because what is in
+          there is part of what a key buys. */}
+      {!apiKey && (
+        <p className="settings-section__hint settings-panel__unlock">
+          Reasoning effort, how long the agent works, and role models unlock with an OpenRouter
+          key.
+        </p>
+      )}
+
+      {/* No key means no choices to make here: a hosted tier supplies every
+          role and pins its own reasoning, and without one nothing runs. An
           Advanced accordion that opens onto nothing actionable is worse
           than no accordion. */}
       {apiKey && (
@@ -208,37 +218,5 @@ export function SettingsPanel() {
         </p>
       </section>
     </div>
-  );
-}
-
-/**
- * The A.CRE Free explainer. Its own component so the /health lookup that
- * names the live model only runs when Settings is actually open, and so the
- * label falls back to the bare tier name on first paint.
- *
- * The wording splits on `selected` because the un-split version asserted
- * "You're using A.CRE Free" to every BYOK reader of this panel too.
- */
-function AcreFreeSection({ selected }: { selected: boolean }) {
-  const { modelLabel } = useAcreFreeInfo();
-  const label = acreFreeLabel(modelLabel);
-  return (
-    <section className="settings-section">
-      <h2 className="settings-section__title">A.CRE Free</h2>
-      <p className="settings-section__hint">
-        {selected ? (
-          <>
-            You&apos;re using <strong>{label}</strong> as your model.
-          </>
-        ) : (
-          <>
-            <strong>{label}</strong> needs no key and no sign-in. Pick it as your model below.
-          </>
-        )}{" "}
-        A.CRE covers the cost to make it accessible to students / learners. Includes certain limits
-        to reduce abuse; every role (primary, sub-agents, Reviewer, vision) runs on the same
-        A.CRE-selected model.
-      </p>
-    </section>
   );
 }

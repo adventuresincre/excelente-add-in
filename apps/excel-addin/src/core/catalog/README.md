@@ -30,7 +30,7 @@ const enriched = enrichModels(models, catalog); // ModelInfo[] with capability /
 - The catalog is **enrichment only**. The picker must render correctly with
   `catalog === null`; nothing here may block or fail the OpenRouter list.
 - Same-origin by design: no CORS, no CSP change, no new trusted host. Vite
-  proxies `/data` to the dev droplet like `/api/free`.
+  proxies `/data` to the dev droplet like the other instance-served paths.
 - No Artificial Analysis key ever reaches this module or the bundle.
 
 ## Tests

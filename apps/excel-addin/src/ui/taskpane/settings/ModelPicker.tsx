@@ -1,5 +1,5 @@
 import type { ModelInfo } from "../../../core/openrouter";
-import { useAcreFreeInfo } from "../useAcreFreeInfo";
+import { useHostedPickerRows } from "@edition";
 import {
   buildPicker,
   labelForPickerModel,
@@ -34,22 +34,21 @@ export function ModelPicker({
   ariaLabel = "Model",
   placeholder = "Choose a model to start…",
 }: ModelPickerProps) {
-  // Names the model A.CRE Free is currently pinned to, so the row reads
-  // "A.CRE Free (GLM 5.3 Flash)". Comes from the proxy at runtime because
-  // A.CRE changes that model without rebuilding the pane. Hook call stays
-  // above the `loading` early return — hooks cannot be conditional.
-  const { modelLabel: acreFreeModelLabel } = useAcreFreeInfo();
+  // The edition's own rows, with their live labels (a hosted tier names the
+  // model it is pinned to right now, fetched at runtime because the host
+  // changes it without rebuilding the pane). Empty in the community
+  // edition. Hook call stays above the `loading` early return — hooks
+  // cannot be conditional.
+  const hosted = useHostedPickerRows();
 
   if (loading) {
     return <div className="model-picker model-picker--loading">Loading models…</div>;
   }
 
-  // A.CRE Free is injected even when the OpenRouter list is empty (no key
-  // yet) or failed to load (bad key) — it needs no list, so a failed fetch
-  // must never take the free option down with it.
-  const { groups, ranks } = buildPicker(error ? [] : models, undefined, {
-    acreFreeModelLabel,
-  });
+  // Hosted rows are injected even when the OpenRouter list is empty (no key
+  // yet) or failed to load (bad key) — they need no list, so a failed fetch
+  // must never take them down with it.
+  const { groups, ranks } = buildPicker(error ? [] : models, undefined, { hosted });
   const known = new Set(groups.flatMap((g) => g.models.map((m) => m.id)));
   const orphan = value && !known.has(value) ? value : null;
 
@@ -69,7 +68,7 @@ export function ModelPicker({
         {/* A stored model that is no longer listed (older than the picker's
             window, retired, or the list failed to load) must still display
             AS ITSELF. Without this a controlled <select> silently shows the
-            first option — "A.CRE Free" — while chat keeps using the old model. */}
+            first option while chat keeps using the old model. */}
         {orphan && (
           <option value={orphan} disabled>
             {orphan} (not in current list)

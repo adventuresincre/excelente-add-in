@@ -4,12 +4,7 @@ import {
   type ModelFamily,
   type ModelInfo,
 } from "../../../core/openrouter";
-import {
-  ACRE_FREE_SENTINEL_ID,
-  acreFreeLabel,
-  DEFAULT_PUBLIC_CONFIG,
-  isAcreFreeModel,
-} from "../../../core/config";
+import { DEFAULT_PUBLIC_CONFIG } from "../../../core/config";
 import {
   compareByCapability,
   formatPricePair,
@@ -66,7 +61,7 @@ const VENDOR_LABELS: Record<string, string> = {
 
 /** The company behind a model, for cards and rows. */
 export function labForModel(m: ModelInfo): string {
-  if (isAcreFreeModel(m.id)) return "A.CRE";
+  if (m.hosted) return m.hosted.lab;
   if (m.family) {
     const entry = FAMILY_DISPLAY.find((f) => f.family === m.family);
     if (entry) return entry.lab;
@@ -81,7 +76,7 @@ export function labForModel(m: ModelInfo): string {
  * the vendor is noise, so the picker and cards show the model part only.
  */
 export function displayName(m: ModelInfo): string {
-  if (isAcreFreeModel(m.id)) return m.name;
+  if (m.hosted) return m.name;
   const i = m.name.indexOf(": ");
   return i === -1 ? m.name : m.name.slice(i + 2);
 }
@@ -105,13 +100,12 @@ export function sortForPicker(models: readonly ModelInfo[]): ModelInfo[] {
 }
 
 /**
- * Section labels, in display order.
+ * The free section's label.
  *
- * A.CRE Free is called out as the students/learners option rather than just
- * "free": it costs A.CRE real money on A.CRE's own OpenRouter key, so
- * anyone who has brought their own key should be reaching for an OpenRouter
- * free model instead — which is only possible now that free models are
- * admitted past the family allowlist.
+ * Hosted rows (an edition's own tier) sit above this in their own groups
+ * with their own labels; see `ModelInfo.hosted`. Free models are admitted
+ * past the family allowlist so that anyone with their own key has a free
+ * option that does not cost the host anything.
  *
  * No finer split than this is honest. Prompt retention is a PROVIDER
  * property, not a model property, and OpenRouter publishes it nowhere a
@@ -122,7 +116,6 @@ export function sortForPicker(models: readonly ModelInfo[]): ModelInfo[] {
  * warning for all of them. The enforceable version, if it is ever wanted,
  * is `provider: { data_collection: "deny" }` on the wire.
  */
-export const ACRE_FREE_GROUP_LABEL = "A.CRE Free Model (For Students / Learners)";
 export const FREE_GROUP_LABEL = "Free Models (may train on your data)";
 
 export interface FamilyGroup {
@@ -200,13 +193,14 @@ export function pickAutoVisionModel(visionCapable: ModelInfo[]): ModelInfo | nul
  * of a list that hasn't arrived.
  */
 export function primarySupportsVision(
-  models: ModelInfo[],
-  primaryId: string | null | undefined
+  models: readonly ModelInfo[],
+  primaryId: string | null | undefined,
+  /** The edition's hosted rows: never in the OpenRouter list, so looked up here. */
+  hostedRows: readonly ModelInfo[] = []
 ): boolean | undefined {
   if (!primaryId) return undefined;
-  // The A.CRE Free sentinel is never in the OpenRouter list; its pinned
-  // model is vision-capable and the proxy re-pins it on every call anyway.
-  if (isAcreFreeModel(primaryId)) return true;
+  const hosted = hostedRows.find((m) => m.id === primaryId);
+  if (hosted) return hosted.supportsVision;
   return models.find((m) => m.id === primaryId)?.supportsVision;
 }
 
@@ -230,12 +224,13 @@ export function primarySupportsVision(
  */
 export function resolveDefaultVisionModelId(
   models: ModelInfo[],
-  pref: { modelId?: string | null; visionModelId?: string | null } | null | undefined
+  pref: { modelId?: string | null; visionModelId?: string | null } | null | undefined,
+  hostedRows: readonly ModelInfo[] = []
 ): string | null {
   if (pref?.visionModelId) return pref.visionModelId;
   const primaryId = pref?.modelId;
   if (!primaryId) return null;
-  if (primarySupportsVision(models, primaryId)) return null;
+  if (primarySupportsVision(models, primaryId, hostedRows)) return null;
   const visionCapable = models.filter((m) => m.supportsTools && m.supportsVision);
   return pickAutoVisionModel(visionCapable)?.id ?? null;
 }
@@ -265,7 +260,7 @@ export function groupByFamily(models: ModelInfo[]): FamilyGroup[] {
 }
 
 export function isOpenRouterFreeModel(m: ModelInfo): boolean {
-  if (isAcreFreeModel(m.id)) return false;
+  if (m.hosted) return false;
   return isFreeTierModel(m);
 }
 
@@ -273,30 +268,19 @@ function isBatchVariant(m: ModelInfo): boolean {
   return m.id.includes(":batch");
 }
 
-/**
- * Synthetic row so A.CRE Free is always first in every picker. `modelLabel`
- * is the live model name from the proxy's /health (see `useAcreFreeInfo`);
- * omit it and the row reads as the bare tier name, which is what the first
- * paint shows before that fetch lands. Carries no capability score on
- * purpose: it is a tier A.CRE re-pins at will, not a model the user chose.
- */
-export function acreFreePickerModel(modelLabel?: string | null): ModelInfo {
-  return {
-    id: ACRE_FREE_SENTINEL_ID,
-    name: acreFreeLabel(modelLabel),
-    contextLength: 1_310_000,
-    pricing: { prompt: 0, completion: 0 },
-    supportsTools: true,
-    supportsReasoning: false,
-    supportsVision: true,
-    created: Number.MAX_SAFE_INTEGER,
-    family: "glm",
-  };
+/** Options for the picker builders. */
+export interface PickerOptions {
+  /**
+   * Rows the edition hosts itself (`ModelInfo.hosted` set), in display
+   * order. Each `groupKey` becomes its own group ahead of every OpenRouter
+   * section. Empty by default, which is the community edition's picker.
+   */
+  hosted?: readonly ModelInfo[];
 }
 
 /**
  * Picker sections, in display order:
- *  1. A.CRE Free Model (For Students / Learners)
+ *  1. Hosted rows, one group per `hosted.groupKey`, when the edition has any
  *  2. Free Models (may train on your data) — OpenRouter's free tier
  *  3. Paid Models (Latest) · per lab — released within the last 12 months
  *  4. Paid Models (Legacy) · per lab — older, but registered within 12 months
@@ -317,7 +301,7 @@ export function acreFreePickerModel(modelLabel?: string | null): ModelInfo {
 export function groupModelsForPicker(
   models: ModelInfo[],
   nowSeconds: number = Math.floor(Date.now() / 1000),
-  options: { includeAcreFree?: boolean; acreFreeModelLabel?: string | null } = {}
+  options: PickerOptions = {}
 ): PickerGroup[] {
   return buildPicker(models, nowSeconds, options).groups;
 }
@@ -326,7 +310,7 @@ export function groupModelsForPicker(
  * Every model the picker can list — the population every rank is relative
  * to, so the details card and the explorer count the same "of N" the
  * dropdown does. Same filters as the groups: a recognised family (or free),
- * registered within the window, not a batch variant, not A.CRE Free.
+ * registered within the window, not a batch variant, not a hosted row.
  */
 export function pickerEligibleModels(
   models: readonly ModelInfo[],
@@ -340,7 +324,7 @@ export function pickerEligibleModels(
         (m.family !== null || isOpenRouterFreeModel(m)) &&
         m.created >= oldestListed &&
         !isBatchVariant(m) &&
-        !isAcreFreeModel(m.id)
+        !m.hosted
     )
   );
 }
@@ -355,9 +339,8 @@ export function pickerEligibleModels(
 export function buildPicker(
   models: readonly ModelInfo[],
   nowSeconds: number = Math.floor(Date.now() / 1000),
-  options: { includeAcreFree?: boolean; acreFreeModelLabel?: string | null } = {}
+  options: PickerOptions = {}
 ): PickerModel {
-  const includeAcreFree = options.includeAcreFree ?? true;
   const oldestLatest = nowSeconds - LATEST_WINDOW_SECONDS;
   const usable = pickerEligibleModels(models, nowSeconds);
   const ranks = rankModels(usable);
@@ -368,15 +351,16 @@ export function buildPicker(
   const paidFamilies = groupByFamily(paid);
   const isLatest = (m: ModelInfo) => releasedAtOf(m) >= oldestLatest;
 
-  const groups: PickerGroup[] = includeAcreFree
-    ? [
-        {
-          key: "acre",
-          label: ACRE_FREE_GROUP_LABEL,
-          models: [acreFreePickerModel(options.acreFreeModelLabel)],
-        },
-      ]
-    : [];
+  // Hosted rows lead, one group per groupKey in the order given. A row
+  // without the marker is a caller error; it is dropped rather than shown
+  // under a made-up label.
+  const groups: PickerGroup[] = [];
+  for (const row of options.hosted ?? []) {
+    if (!row.hosted) continue;
+    const existing = groups.find((g) => g.key === row.hosted?.groupKey);
+    if (existing) existing.models.push(row);
+    else groups.push({ key: row.hosted.groupKey, label: row.hosted.groupLabel, models: [row] });
+  }
 
   if (free.length > 0) {
     groups.push({
@@ -444,10 +428,10 @@ export function labelForPickerModel(
   ranks?: RankTable,
   style: "capability" | "value" = "capability"
 ): string {
-  // The synthetic A.CRE Free row already carries its full label (tier plus
-  // the live model name) in `name`; the decorations below are meaningless
-  // for a subsidized, server-pinned model.
-  if (isAcreFreeModel(m.id)) return m.name;
+  // A hosted row already carries its full label (tier plus the live model
+  // name) in `name`; the decorations below are meaningless for a
+  // subsidized, server-pinned model.
+  if (m.hosted) return m.name;
   const isFree = isOpenRouterFreeModel(m);
   const parts: string[] = [`${isFree ? "🆓 " : ""}${displayName(m)}`];
   const r = ranks?.byId.get(m.id);

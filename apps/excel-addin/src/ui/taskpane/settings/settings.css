@@ -30,8 +30,9 @@
   color: var(--text-muted);
 }
 
-/* Top-level headings — OpenRouter API key, A.CRE Free, Primary model,
-   Advanced, About — read as section titles rather than as field labels.
+/* Top-level headings — OpenRouter API key, Primary model, Advanced, About,
+   and an edition's own section — read as section titles rather than as
+   field labels.
    Every heading in the panel used the identical overline style, so
    "Advanced" was indistinguishable from "Subagent model" sitting inside
    it and the panel had no visible hierarchy at all.
@@ -1097,4 +1098,18 @@
   font-weight: 700;
   color: var(--charcoal);
   margin-right: 2px;
+}
+
+/* Keyless state: the one line under the primary picker naming what a key
+   unlocks (pending-model, 2026-09-15). */
+.settings-panel__unlock {
+  margin: calc(-1 * var(--sp-2)) 0 0;
+}
+
+/* Explorer rows when the user has no key: every model is browsable and
+   choosable, and says it waits for the key. */
+.model-row__badge--key {
+  border-color: var(--gold-badge-border);
+  background: var(--gold-badge-bg);
+  color: var(--gold-badge-text);
 }

@@ -639,6 +639,24 @@ describe("createOpenRouterClient.listModels", () => {
     ],
   };
 
+  // 2026-09-15: the list is public, and a pane with no key reads it to show
+  // the whole catalogue. "Bearer " with nothing after it is rejected upstream
+  // where no header at all is accepted.
+  it("omits the Authorization header when there is no key", async () => {
+    const fetch = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(apiResponse), {
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+    const client = createOpenRouterClient({ fetch });
+    await client.listModels("");
+    const init = fetch.mock.calls[0]?.[1] as { headers: Record<string, string> };
+    expect(init.headers.Authorization).toBeUndefined();
+    expect(init.headers["X-Title"]).toBeDefined();
+  });
+
   it("filters to allowed families and sorts newest-first", async () => {
     const fetch = vi.fn().mockImplementation(() =>
       Promise.resolve(

@@ -1,0 +1,127 @@
+/*
+ * System notice — the one card for every message Excelente sends on its own
+ * behalf. Warm white on the cream ground with the standard card border, gold
+ * only in the eyebrow. See SystemNotice.tsx for the rationale.
+ */
+.system-notice {
+  display: grid;
+  gap: var(--sp-2);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--warm-white);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-subtle);
+  text-align: left;
+  /* Settings sections set a monospace stack on their paragraphs; the notice
+     is the product speaking and keeps the product's sans throughout. */
+  font-family: var(--font-sans);
+}
+
+.system-notice__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+
+.system-notice__mark {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 2px;
+}
+
+.system-notice__sep {
+  color: var(--gold-badge-border);
+}
+
+.system-notice__state {
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.system-notice__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.0625rem;
+  line-height: var(--lh-snug);
+  color: var(--charcoal);
+  text-wrap: balance;
+}
+
+.system-notice__body,
+.system-notice__body p {
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+}
+
+.system-notice__body p {
+  margin: 0;
+}
+
+.system-notice__body p + p {
+  margin-top: var(--sp-1);
+}
+
+.system-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  margin-top: var(--sp-1);
+}
+
+.system-notice__foot {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+
+/* Buttons inside a notice. `btn-primary` / `btn-secondary` exist elsewhere
+   with heavier chrome; these are the notice's own quieter pair. */
+.system-notice__btn {
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 7px 12px;
+  border-radius: var(--r-base);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.system-notice__btn--dark {
+  background: var(--charcoal);
+  color: var(--warm-white);
+  border: 1px solid var(--charcoal);
+}
+
+.system-notice__btn--dark:hover {
+  background: var(--charcoal-light);
+}
+
+.system-notice__btn--quiet {
+  background: transparent;
+  color: var(--text-body);
+  border: 1px solid var(--border-card);
+}
+
+.system-notice__btn--quiet:hover {
+  background: var(--cream-dark);
+}
+
+.system-notice__btn:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 2px;
+}

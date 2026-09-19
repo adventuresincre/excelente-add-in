@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { BUNDLED_SOURCE_ID, bundledSkillSource } from "./bundled";
+import {
+  BUNDLED_SOURCE_ID,
+  bundledSkillSource,
+  sharedBundledFiles,
+  withExtraSkillFiles,
+} from "./bundled";
 
 const sampleFile = `---
 name: my-skill
@@ -140,23 +145,33 @@ describe("bundledSkillSource", () => {
 });
 
 describe("bundledSkillSource — production globs", () => {
-  // The loader globs the skills directory, so the set varies by build: a
-  // distribution may bundle skills whose license does not allow them to be
-  // redistributed here (see skills/LICENSE.md). Assert the floor instead of
-  // an exact list, so a renamed or dropped core skill still fails the build
-  // and an added one does not.
-  it("includes the core skill set", async () => {
+  // The shared folder is exactly the set every edition ships. An edition
+  // adds its own on top through `withExtraSkillFiles` (tested beside the
+  // edition), so the default source must list these five and only these.
+  it("includes exactly the shared skill set", async () => {
     const src = bundledSkillSource();
     const names = (await src.list()).map((s) => s.name).sort();
-    expect(names).toEqual(
-      expect.arrayContaining([
-        "cre-modeling-conventions",
-        "excel-native-method",
-        "formula-audit",
-        "office-js-patterns",
-        "verify-model-outputs",
-      ])
-    );
+    expect(names).toEqual([
+      "cre-modeling-conventions",
+      "excel-native-method",
+      "formula-audit",
+      "office-js-patterns",
+      "verify-model-outputs",
+    ]);
+  });
+
+  it("merges an edition's extra skills on top of the shared set", async () => {
+    const extra = {
+      skill: {
+        "/edition/x/skills/extra-skill/SKILL.md": sampleFile.replace("my-skill", "extra-skill"),
+      },
+      resources: { "/edition/x/skills/extra-skill/references/a.md": "ref" },
+    };
+    const src = bundledSkillSource(withExtraSkillFiles(sharedBundledFiles(), extra));
+    const names = (await src.list()).map((s) => s.name);
+    expect(names).toContain("extra-skill");
+    expect(names).toContain("cre-modeling-conventions");
+    expect((await src.load("extra-skill")).resources.get("references/a.md")).toBe("ref");
   });
 
   it("each bundled skill has a non-empty body", async () => {

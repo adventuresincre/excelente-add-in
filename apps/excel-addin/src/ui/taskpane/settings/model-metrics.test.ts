@@ -51,7 +51,11 @@ const nemotron = model("nvidia/nemotron-3-super-120b-a12b:free", {
   family: null,
   reasoningPolicy: { mandatory: false, supportedEfforts: ["medium", "low"] },
 });
-const acre = model("acre-free", { capability: 99 });
+// A hosted row (an edition's own tier) never ranks, however it is scored.
+const acre = model("host-tier", {
+  capability: 99,
+  hosted: { lab: "Host", groupKey: "host", groupLabel: "Host Tier" },
+});
 
 describe("formatting", () => {
   it("rounds capability to a whole number", () => {
@@ -91,7 +95,7 @@ describe("formatting", () => {
 describe("rank, bar and value", () => {
   const list = [astra, sol, unranked, nemotron, acre];
 
-  it("ranks densely among scored models and ignores A.CRE Free", () => {
+  it("ranks densely among scored models and ignores hosted rows", () => {
     expect(capabilityRank(list, astra)).toEqual({ rank: 1, of: 3 });
     expect(capabilityRank(list, sol)).toEqual({ rank: 2, of: 3 });
     expect(capabilityRank(list, nemotron)).toEqual({ rank: 3, of: 3 });
@@ -151,7 +155,7 @@ describe("explorerRows", () => {
   const list = [astra, sol, unranked, nemotron, acre];
   const none = { freeOnly: false, vision: false, reasoningOffable: false };
 
-  it("never lists A.CRE Free and defaults to most capable first", () => {
+  it("never lists a hosted row and defaults to most capable first", () => {
     expect(explorerRows(list, none, "capability").map((m) => m.id)).toEqual([
       astra.id,
       sol.id,

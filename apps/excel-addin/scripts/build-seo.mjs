@@ -224,7 +224,7 @@ const SUMMARY =
   "pane add-in. It reads the whole workbook (every sheet, formula, named range and chart), " +
   "plans its approach, calls Excel tools, and writes back only after the user approves each " +
   "change. Every write is reversible from a one-click undo. Users bring their own model " +
-  "through an OpenRouter API key, or start on A.CRE Free which needs no account. It was " +
+  "through an OpenRouter API key. It was " +
   "built by commercial real estate practitioners for underwriting and financial modelling, " +
   "and the underlying tools work on any Excel workbook. Licensed Apache 2.0 by CRE Edge, LLC.";
 

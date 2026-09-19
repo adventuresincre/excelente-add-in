@@ -10,11 +10,10 @@ OpenRouter directly.
 
 ## Who charges what
 
-| | A.CRE Free | Your own key |
-|---|---|---|
-| Who pays | A.CRE | You |
-| Billed by | Nobody | OpenRouter, at its published rates |
-| Limits | Shared, metered per network address | Whatever you set at OpenRouter |
+<!-- edition:include cost/who-charges -->
+You pay OpenRouter, at its published rates, for what your key uses. The limits are whatever you set
+at OpenRouter.
+<!-- /edition:include -->
 
 CRE Edge does not resell model access and does not process payments. The relationship is between you
 and OpenRouter.
@@ -36,9 +35,8 @@ session cost** button.
 Sub-millidollar totals are shown in millidollars rather than rounded to `$0.00`, because "$0.00" on a
 run that cost something tells you nothing.
 
-On A.CRE Free the cost row carries an asterisk:
-
-> \* Session cost paid for by A.CRE to help students and young professionals learn to use AI in Excel.
+<!-- edition:include cost/asterisk -->
+<!-- /edition:include -->
 
 ## What drives cost
 
@@ -72,14 +70,8 @@ suggest. It is also why switching models mid-conversation costs a full re-read o
 - **Enable the skills the job needs**, not all of them.
 - **Point the Summary model at something cheap.** Compaction does not need frontier reasoning.
 
-## A.CRE Free limits
-
-A.CRE Free carries limits to keep shared usage sane, metered per network address, and A.CRE may
-change the model or end the offer at any point. It is there so students, learners, and anyone curious
-can see what the add-in actually does.
-
-If you are using it for real work, add a key. You will get better models, control over reasoning,
-independent Reviewer verification, and no shared ceiling.
+<!-- edition:include cost/hosted-limits -->
+<!-- /edition:include -->
 
 ## Nothing runs unattended
 

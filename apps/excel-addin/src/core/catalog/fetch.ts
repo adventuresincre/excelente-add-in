@@ -4,7 +4,7 @@ import type { CatalogEntry, ModelCatalogFile } from "./types";
  * Same-origin path nginx aliases to the nightly job's output. Same-origin on
  * purpose: no CORS, no CSP allowlist entry, no new host for the Office
  * runtime to trust, and the Vite dev server proxies it to the dev droplet the
- * way it already proxies `/api/free`.
+ * way it proxies the other instance-served paths.
  */
 export const MODEL_CATALOG_ENDPOINT = "/data/model-catalog.json";
 

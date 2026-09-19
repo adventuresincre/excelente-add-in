@@ -10,7 +10,7 @@ import {
 
 // Every policy below is a real row from OpenRouter's /models on 2026-09-10.
 
-/** z-ai/glm-5.3-flash — A.CRE Free's model. Mandatory, defaults to max. */
+/** z-ai/glm-5.3-flash — the shipped summary default. Mandatory, defaults to max. */
 const GLM_FLASH: ReasoningPolicy = {
   mandatory: true,
   defaultEnabled: true,
@@ -164,7 +164,7 @@ describe("reasoningParamFor — off", () => {
 
   // THE trap. Both `{enabled:false}` and `{effort:"none"}` return HTTP 400
   // "Reasoning is mandatory for this endpoint and cannot be disabled" on
-  // glm-5.3-flash — which every A.CRE Free request runs on. A blanket
+  // glm-5.3-flash — a shipped default. A blanket
   // disable would have failed the whole free tier.
   it("NEVER sends a disable to a mandatory-reasoning model", () => {
     for (const policy of [GLM_FLASH, MUSE, ASTRA, MANDATORY_NO_EFFORTS]) {

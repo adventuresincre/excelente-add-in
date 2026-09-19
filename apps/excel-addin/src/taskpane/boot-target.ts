@@ -9,8 +9,8 @@
  * Until now they got a working add-in. `boot()` asked Office for the host and,
  * finding none, mounted anyway with in-memory storage — the browser-preview
  * path that exists so `npm run dev` is useful. Deployed, that path handed a
- * stranger a working agent and, with A.CRE Free selected, spend on A.CRE's
- * OpenRouter key.
+ * stranger a working agent and, with a hosted tier selected, spend on the
+ * host's OpenRouter key.
  *
  * The rule below keeps the preview where it belongs (a dev server on this
  * machine) and shows everyone else a page pointing at the real install.

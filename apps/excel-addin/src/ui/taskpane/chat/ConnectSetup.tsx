@@ -3,40 +3,49 @@ import { useApp } from "../AppProvider";
 import { ApiKeyField } from "../settings/ApiKeyField";
 import { ModelPicker } from "../settings/ModelPicker";
 import { useModels } from "../settings/useModels";
-import {
-  ACRE_FREE_DISPLAY_NAME,
-  ACRE_FREE_SENTINEL_ID,
-  acreFreeModelPref,
-  DEFAULT_PUBLIC_CONFIG,
-  isAcreFreeModel,
-  resolveByokDefaults,
-} from "../../../core/config";
+import { DEFAULT_PUBLIC_CONFIG, resolveByokDefaults } from "../../../core/config";
+import { edition } from "@edition";
+import { hostedModelFor } from "../../../edition/hosted";
+import type { HostedModel } from "../../../edition/types";
 import { OnboardConnectors } from "./OnboardConnectors";
 
-type Step = "start" | "key" | "model" | "connectors";
+/**
+ * Wizard steps. Two openings, chosen by the edition:
+ *
+ *   - `connect`: "Connect your model." A list of providers with the key
+ *     field inline. Today that list is OpenRouter alone; it is a list so a
+ *     second provider slots in beside it rather than behind another screen.
+ *     Used when the edition offers nothing without a key (community).
+ *   - `start` then `key`: "Get started" with a choice between an OpenRouter
+ *     key and the edition's hosted alternative, then the key on its own
+ *     screen. Used when `edition.setup.StartAlternative` exists.
+ *
+ * Both lead to `model`, then `connectors`.
+ */
+type Step = "connect" | "start" | "key" | "model" | "connectors";
 
 /**
- * Chat-first first-run. Stays on Chat (no bounce to Settings). OpenRouter
- * is the encouraged path; A.CRE Free is available with no key and no
- * sign-in. Model preference is written only after the connector step so
- * that step is not skipped the moment a model is chosen.
+ * Chat-first first-run. Stays on Chat (no bounce to Settings). Model
+ * preference is written only after the connector step so that step is not
+ * skipped the moment a model is chosen.
  */
 export function ConnectSetup() {
   const { apiKey, setApiKey, clearApiKey, setModelPref, openrouter } = useApp();
-  const [step, setStep] = useState<Step>(apiKey ? "model" : "start");
-  const [acreDisclosure, setAcreDisclosure] = useState(false);
+  const StartAlternative = edition.setup.StartAlternative;
+  const opening: Step = StartAlternative ? "start" : "connect";
+  const keyStep: Step = StartAlternative ? "key" : "connect";
+  const [step, setStep] = useState<Step>(apiKey ? "model" : opening);
   const [picked, setPicked] = useState("");
   const { models, loading, error } = useModels(openrouter, apiKey);
   const toolModels = useMemo(() => models.filter((m) => m.supportsTools), [models]);
 
+  const pickedHosted = hostedModelFor(edition.hostedModels, picked);
   const pickedModel = toolModels.find((m) => m.id === picked);
   // Any text-only primary, not just a free one: the gap is the same whoever
   // is paying. Gated on having FOUND the model, so a list that hasn't loaded
   // never produces the warning.
   const showVisionNote =
-    Boolean(picked) && !isAcreFreeModel(picked) && pickedModel
-      ? !pickedModel.supportsVision
-      : false;
+    Boolean(picked) && !pickedHosted && pickedModel ? !pickedModel.supportsVision : false;
 
   async function handleSaveKey(key: string) {
     await setApiKey(key);
@@ -44,8 +53,10 @@ export function ConnectSetup() {
   }
 
   async function finish(modelId: string) {
-    if (isAcreFreeModel(modelId)) {
-      await setModelPref(acreFreeModelPref(DEFAULT_PUBLIC_CONFIG.byokDefaults));
+    if (!modelId) return;
+    const hosted = hostedModelFor(edition.hostedModels, modelId);
+    if (hosted) {
+      await setModelPref(hosted.modelPref());
       return;
     }
     // Start from the bundled defaults so the cheap summary model for
@@ -56,23 +67,58 @@ export function ConnectSetup() {
     });
   }
 
-  function chooseAcreFree() {
-    setPicked(ACRE_FREE_SENTINEL_ID);
+  function chooseHosted(model: HostedModel) {
+    setPicked(model.id);
     setStep("connectors");
   }
+
+  const openRouterSteps = (
+    <ol className="connect-setup__steps">
+      <li>
+        Open{" "}
+        <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">
+          openrouter.ai/keys
+        </a>{" "}
+        and create an account.
+      </li>
+      <li>Click Create Key, then copy it.</li>
+      <li>Paste it below.</li>
+    </ol>
+  );
 
   return (
     <div className="chat-panel__empty">
       <BrandMark />
-      {step === "start" && (
+      {step === "connect" && (
+        <>
+          <h2>
+            Connect your <em className="accent">model</em>.
+          </h2>
+          <p>{edition.setup.intro}</p>
+          <div className="connect-setup__form">
+            <ul className="connect-setup__providers" aria-label="Model providers">
+              <li className="connect-setup__provider">
+                <div className="connect-setup__provider-head">
+                  <span className="connect-setup__provider-name">OpenRouter</span>
+                  <span className="connect-setup__provider-blurb">
+                    One key reaches Claude, GPT, Gemini, Grok, and hundreds more. You pay OpenRouter
+                    for what you use; Excelente takes nothing.
+                  </span>
+                </div>
+                {openRouterSteps}
+                <ApiKeyField storedKey={apiKey} onSave={handleSaveKey} onClear={clearApiKey} />
+              </li>
+            </ul>
+          </div>
+        </>
+      )}
+
+      {step === "start" && StartAlternative && (
         <>
           <h2>
             Get started with <em className="accent">Excelente</em>.
           </h2>
-          <p>
-            Excelente can use any model on OpenRouter with your own key, or start with a basic model
-            that A.CRE pays for (for a limited time).
-          </p>
+          <p>{edition.setup.intro}</p>
           <div className="connect-setup__form">
             <p className="settings-section__hint">
               Connect your own OpenRouter key to pick hundreds of models (from free to frontier).
@@ -85,14 +131,7 @@ export function ConnectSetup() {
               Use an OpenRouter key
             </button>
             <div className="connect-setup__or">or</div>
-            <button
-              type="button"
-              className="btn-secondary connect-setup__primary"
-              onClick={() => setAcreDisclosure(true)}
-            >
-              Use {ACRE_FREE_DISPLAY_NAME}, no key or sign-in (for a limited time)
-            </button>
-            {acreDisclosure && <AcreFreeDisclosure onContinue={chooseAcreFree} />}
+            <StartAlternative onChooseHosted={chooseHosted} />
           </div>
         </>
       )}
@@ -107,17 +146,7 @@ export function ConnectSetup() {
             OpenRouter for what you use.
           </p>
           <div className="connect-setup__form">
-            <ol className="connect-setup__steps">
-              <li>
-                Open{" "}
-                <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">
-                  openrouter.ai/keys
-                </a>{" "}
-                and create an account.
-              </li>
-              <li>Click Create Key, then copy it.</li>
-              <li>Paste it below.</li>
-            </ol>
+            {openRouterSteps}
             <ApiKeyField storedKey={apiKey} onSave={handleSaveKey} onClear={clearApiKey} />
             <div className="connect-setup__actions">
               <button type="button" className="btn-secondary" onClick={() => setStep("start")}>
@@ -134,9 +163,9 @@ export function ConnectSetup() {
             Pick your <em className="accent">model</em>.
           </h2>
           {/* This step is only reached after a key is saved, so the reader is
-              a BYOK user. Nothing about A.CRE Free belongs here — the picker
-              labels its own sections, and the note below fires only if they
-              actually pick it. */}
+              a BYOK user. Nothing about a hosted tier belongs here — the
+              picker labels its own sections, and the hint below fires only
+              if they actually pick one. */}
           <p>
             Free models may train on your data. Latest means released in the last 12 months; each
             lab&apos;s models are listed most capable first, with a capability score after the name.
@@ -150,11 +179,8 @@ export function ConnectSetup() {
               loading={loading}
               error={error}
             />
-            {isAcreFreeModel(picked) && (
-              <p className="settings-section__hint">
-                A.CRE covers this model. Your data is not used for training. It is far less capable
-                than OpenRouter models. You can add a key in Settings anytime.
-              </p>
+            {pickedHosted?.setupPickHint && (
+              <p className="settings-section__hint">{pickedHosted.setupPickHint}</p>
             )}
             {showVisionNote && (
               <div className="ask-user-card">
@@ -166,7 +192,7 @@ export function ConnectSetup() {
             <div className="connect-setup__actions">
               {/* A mistyped key used to strand people here: the list fails to
                   load, nothing is pickable, and there was no way back. */}
-              <button type="button" className="btn-secondary" onClick={() => setStep("key")}>
+              <button type="button" className="btn-secondary" onClick={() => setStep(keyStep)}>
                 Change key
               </button>
               <button
@@ -191,39 +217,9 @@ export function ConnectSetup() {
             If you already use CRE Agents or the A.CRE Intelligence Hub, turn them on here. Or add
             them later in Capabilities.
           </p>
-          <OnboardConnectors onContinue={() => void finish(picked || ACRE_FREE_SENTINEL_ID)} />
+          <OnboardConnectors onContinue={() => void finish(picked)} />
         </>
       )}
-    </div>
-  );
-}
-
-/**
- * The one thing a free user must read before starting, shown inline where
- * they make the choice — not as a separate gate that can lock the composer.
- */
-function AcreFreeDisclosure({ onContinue }: { onContinue: () => void }) {
-  return (
-    <div className="ask-user-card connect-setup__warn">
-      <div className="ask-user-card__header">{ACRE_FREE_DISPLAY_NAME} is a starting point</div>
-      <p>
-        {ACRE_FREE_DISPLAY_NAME} is built for students and learners on a budget, or anyone who wants
-        to quickly experience what an AI harness inside Excel can do.
-      </p>
-      <p>
-        It uses a capable, lower-cost model with limited shared usage, and it is offered for a
-        limited time, and A.CRE may change or end it at any point. As soon as you&apos;re ready, we
-        recommend adding your own OpenRouter key. That gives you control over which model you use,
-        the quality of the model, and your usage.
-      </p>
-      <p>
-        Your workbook is sent to the model to complete the work and is not used to train the model.
-      </p>
-      <div className="connect-setup__actions connect-setup__actions--center">
-        <button type="button" className="btn-primary" onClick={onContinue}>
-          Continue with {ACRE_FREE_DISPLAY_NAME}
-        </button>
-      </div>
     </div>
   );
 }

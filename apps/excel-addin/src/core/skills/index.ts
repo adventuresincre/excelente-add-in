@@ -1,6 +1,12 @@
 export { parseSkillFile, parseSimpleYaml } from "./frontmatter";
 export { createSkillRegistry } from "./registry";
-export { bundledSkillSource, BUNDLED_SOURCE_ID } from "./bundled";
+export {
+  bundledSkillSource,
+  sharedBundledFiles,
+  withExtraSkillFiles,
+  BUNDLED_SOURCE_ID,
+  type BundledSkillFiles,
+} from "./bundled";
 export { userSkillSource, USER_SOURCE_ID } from "./user";
 export { acreSkillSource, ACRE_SOURCE_ID, type AcreSkillSourceOptions } from "./registry-acre";
 export { createInMemorySkillStore } from "./store-memory";

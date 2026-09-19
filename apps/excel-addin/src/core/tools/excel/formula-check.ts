@@ -7,8 +7,8 @@ import { formatA1, type CellRef } from "../../context";
  * "The argument is invalid or missing or has an incorrect format." — with no
  * cell, no formula and no hint. A model handed that line retries the same
  * call, patches neighbouring cells, or gives up on write_range for
- * run_excel_script; on 2026-09-10 A.CRE Free spent ~40 single-cell writes
- * chasing two malformed totals. Everything here exists to name the cell and
+ * run_excel_script; on 2026-09-10 a flash-tier model spent ~40 single-cell
+ * writes chasing two malformed totals. Everything here exists to name the cell and
  * the reason before Excel is even asked.
  */
 

@@ -64,7 +64,8 @@ A different lab's model catches things the original missed, because it does not 
 that produced the error. This is the single highest-value setting in Advanced for anyone running
 real work.
 
-Not available on A.CRE Free, where every role runs the same model.
+<!-- edition:include subagents/hosted-note -->
+<!-- /edition:include -->
 
 ## Asking for a review yourself
 

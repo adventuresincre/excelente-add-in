@@ -80,10 +80,25 @@ const typical = base + "\n## A.CRE modeling conventions...\n" + conv + "\n" + wo
 add("≈ TYPICAL ASSEMBLED SYSTEM PROMPT (work mode, no memory)", typical);
 
 // 8. All bundled skill bodies + frontmatter summaries (lazy cost reference)
-import { readdirSync } from "node:fs";
-for (const dir of readdirSync(join(root, "skills"))) {
-  const md = read(`skills/${dir}/SKILL.md`);
-  rows.push({ name: `  [skill body, lazy] ${dir}`, chars: md.length, tokens: tok(md) });
+import { existsSync, readdirSync } from "node:fs";
+// The shared five under skills/, plus whatever each edition bundles on top
+// (src/edition/<name>/skills/). Non-skill files (LICENSE.md and the like)
+// sit at the top level of those folders and have no SKILL.md, so skip them.
+const skillDirs = [join(root, "skills")];
+const editionsDir = join(root, "src", "edition");
+if (existsSync(editionsDir)) {
+  for (const e of readdirSync(editionsDir)) {
+    const d = join(editionsDir, e, "skills");
+    if (existsSync(d)) skillDirs.push(d);
+  }
+}
+for (const base of skillDirs) {
+  for (const dir of readdirSync(base)) {
+    const file = join(base, dir, "SKILL.md");
+    if (!existsSync(file)) continue;
+    const md = readFileSync(file, "utf8");
+    rows.push({ name: `  [skill body, lazy] ${dir}`, chars: md.length, tokens: tok(md) });
+  }
 }
 
 console.log("component".padEnd(58) + "chars".padStart(8) + "~tokens".padStart(9));

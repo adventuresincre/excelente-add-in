@@ -1,6 +1,5 @@
 import { isFreeTierModel, resolveEffort, type ModelInfo } from "../../../core/openrouter";
 import type { ReasoningLevel } from "../../../core/storage";
-import { isAcreFreeModel } from "../../../core/config";
 
 /**
  * Pure helpers behind the picker labels, the details card and the explorer.
@@ -80,13 +79,13 @@ export function capabilityRank(
   const scores = Array.from(
     new Set(
       models
-        .filter((x) => !isAcreFreeModel(x.id) && x.capability !== undefined)
+        .filter((x) => !x.hosted && x.capability !== undefined)
         .map((x) => x.capability as number)
     )
   ).sort((a, b) => b - a);
   const rank = scores.indexOf(m.capability) + 1;
   if (rank === 0) return null;
-  const of = models.filter((x) => !isAcreFreeModel(x.id) && x.capability !== undefined).length;
+  const of = models.filter((x) => !x.hosted && x.capability !== undefined).length;
   return { rank, of };
 }
 
@@ -192,7 +191,7 @@ export const EMPTY_RANKS: RankTable = { byId: new Map(), ofCapability: 0, ofValu
  */
 export function rankModels(population: readonly ModelInfo[]): RankTable {
   const byId = new Map<string, ModelRanks>();
-  const scored = population.filter((m) => !isAcreFreeModel(m.id) && m.capability !== undefined);
+  const scored = population.filter((m) => !m.hosted && m.capability !== undefined);
   const capScores = Array.from(new Set(scored.map((m) => m.capability as number))).sort(
     (a, b) => b - a
   );
@@ -223,7 +222,7 @@ export const TOP_LIST_SIZE = 10;
  * footnote.
  */
 export function qualifiesForTopLists(m: ModelInfo): boolean {
-  return !isAcreFreeModel(m.id) && m.supportsTools && m.supportsReasoning && m.supportsVision;
+  return !m.hosted && m.supportsTools && m.supportsReasoning && m.supportsVision;
 }
 
 /** Qualifying models with a capability rank, best first, at most `size`. */
@@ -309,15 +308,16 @@ const COMPARATORS: Record<ExplorerSort, (a: ModelInfo, b: ModelInfo) => number> 
 };
 
 /**
- * The explorer's rows: a role's model list, filtered and sorted. A.CRE Free
- * never appears — it is a tier, not a model, and carries no score by design.
+ * The explorer's rows: a role's model list, filtered and sorted. A hosted
+ * row never appears — it is a tier, not a model, and carries no score by
+ * design.
  */
 export function explorerRows(
   models: readonly ModelInfo[],
   filters: ExplorerFilters,
   sort: ExplorerSort
 ): ModelInfo[] {
-  let rows = models.filter((m) => !isAcreFreeModel(m.id));
+  let rows = models.filter((m) => !m.hosted);
   if (filters.freeOnly) rows = rows.filter((m) => isFreeTierModel(m));
   if (filters.vision) rows = rows.filter((m) => m.supportsVision);
   if (filters.reasoningOffable) rows = rows.filter((m) => m.reasoningPolicy?.mandatory !== true);

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createAcreFreeClient } from "../../../core/openrouter";
 import type { ChatMessage, ModelInfo, ReasoningLevel } from "../../../core/openrouter";
 import {
   appendSelectionNote,
@@ -28,11 +27,9 @@ import type {
   UpdatePlanStepInput,
 } from "../../../core/tools";
 import { buildUserContent, type PreparedAttachment } from "../../../core/vision";
-import {
-  ACRE_FREE_OPENROUTER_ID,
-  isAcreFreeModel,
-  resolveOpenRouterModelId,
-} from "../../../core/config";
+import { edition } from "@edition";
+import { hostedModelFor, resolveUpstreamModelId } from "../../../edition/hosted";
+import type { HostedModel } from "../../../edition/types";
 import { useApp, type ChatMode } from "../AppProvider";
 import { useApprovalQueue, type ApprovalQueue } from "./useApprovalQueue";
 import { useAskUserQueue, type AskUserQueue } from "./useAskUserQueue";
@@ -425,7 +422,8 @@ export function useAgentStream({
 }: UseAgentStreamProps): UseAgentStream {
   const {
     apiKey,
-    modelPref,
+    runningModelPref,
+    pendingModelId,
     openrouter,
     chatMode,
     setChatMode,
@@ -514,19 +512,21 @@ export function useAgentStream({
     [skillProposalQ, installSkillFromProposal]
   );
 
-  // A.CRE Free routes to A.CRE's proxy instead of OpenRouter directly: the
+  // A hosted tier routes to its host instead of OpenRouter directly: the
   // key that funds it is server-side, so the pane never holds a credential.
-  const acreFree = isAcreFreeModel(modelPref?.modelId);
-  const acreFreeClient = useMemo(() => createAcreFreeClient(), []);
-  const client = acreFree ? acreFreeClient : openrouter;
+  // Read the RUNNING preference: a keyless user may have chosen another
+  // model, and that choice waits while the fallback answers (pending-model).
+  // The edition caches the client, so its identity is stable across renders.
+  const hosted = hostedModelFor(edition.hostedModels, runningModelPref?.modelId);
+  const client = hosted ? hosted.client() : openrouter;
 
-  // With A.CRE Free as primary, A.CRE's proxy pins the model server-side, so
-  // a per-role override sent there would be silently swallowed. A user who
+  // With a hosted primary, the host pins the model server-side, so a
+  // per-role override sent there would be silently swallowed. A user who
   // also holds their own key gets those overrides honored against it — that
-  // role bills to them, the primary loop stays on A.CRE's key. Without a key
-  // there is nothing to route to and Settings hides the role pickers, so
+  // role bills to them, the primary loop stays on the host's key. Without a
+  // key there is nothing to route to and Settings hides the role pickers, so
   // there is nothing to honor.
-  const roleClient = acreFree && apiKey ? openrouter : undefined;
+  const roleClient = hosted && apiKey ? openrouter : undefined;
 
   const orchestrator = useMemoOrchestrator(
     client,
@@ -650,8 +650,12 @@ export function useAgentStream({
       selection: SelectionInfo | null = null
     ) => {
       if (busy) return;
+      // A chosen model waiting on a key locks the chat (the composer is
+      // disabled; this is the belt to that suspender). Nothing is sent to
+      // any model until the user adds a key or returns to the fallback.
+      if (pendingModelId) return;
       // BYOK still needs the user's own OpenRouter credential.
-      if (!apiKey && !acreFree) {
+      if (!apiKey && !hosted) {
         setError("Add an OpenRouter API key in Settings to send.");
         return;
       }
@@ -755,7 +759,10 @@ export function useAgentStream({
       } catch (e) {
         console.warn(`Failed to read workbook overrides: ${(e as Error).message}`);
       }
-      const effectiveModelId = resolveOpenRouterModelId(overrides.model ?? modelId);
+      const effectiveModelId = resolveUpstreamModelId(
+        edition.hostedModels,
+        overrides.model ?? modelId
+      );
       const effectiveReasoning = overrides.reasoning ?? reasoning;
       // NOTE: there is deliberately no workbook-driven auto-approve here.
       // `_excelente!B1` travels inside the .xlsx, so honoring an
@@ -888,17 +895,17 @@ export function useAgentStream({
 
       try {
         for await (const event of orchestrator.run({
-          // Empty on A.CRE Free: the proxy's auth-header builder ignores it.
+          // Empty on a hosted tier: the host's auth-header builder ignores it.
           apiKey: apiKey ?? "",
-          // Only meaningful alongside `roleClient` (A.CRE Free primary plus a
+          // Only meaningful alongside `roleClient` (hosted primary plus a
           // user key); the orchestrator falls back to `apiKey` otherwise.
           roleApiKey: apiKey ?? undefined,
           modelId: effectiveModelId,
           reasoning: effectiveReasoning,
           reasoningPolicy,
-          subagentModelId: roleOverride(subagentModelId, acreFree),
-          visionModelId: roleOverride(visionModelId, acreFree),
-          summaryModelId: roleOverride(summaryModelId, acreFree),
+          subagentModelId: roleOverride(subagentModelId, edition.hostedModels, hosted),
+          visionModelId: roleOverride(visionModelId, edition.hostedModels, hosted),
+          summaryModelId: roleOverride(summaryModelId, edition.hostedModels, hosted),
           maxTurns: maxTurns ?? undefined,
           systemPrompt,
           messages: [...history, userMessage, ...seededMessages],
@@ -961,7 +968,7 @@ export function useAgentStream({
     [
       busy,
       apiKey,
-      acreFree,
+      hosted,
       modelId,
       reasoning,
       reasoningPolicy,
@@ -1613,19 +1620,21 @@ import type { ApprovalDecision } from "../../../core/agent";
 /**
  * Normalizes a stored role model id into an orchestrator override.
  *
- * `acreFreeModelPref` writes the pinned A.CRE Free model into EVERY role id
+ * A hosted tier's `modelPref()` writes its pinned model into EVERY role id
  * so the pane's per-model cost breakdown stays honest about what ran. That
- * is not a user override, and treating it as one would hand A.CRE's model to
- * `roleClient` — billing the user's own key for the thing A.CRE is paying
- * for. On A.CRE Free, a role id equal to the pin means "same as primary".
+ * is not a user override, and treating it as one would hand the host's
+ * model to `roleClient` — billing the user's own key for the thing the host
+ * is paying for. With a hosted primary, a role id equal to the pin means
+ * "same as primary".
  */
 export function roleOverride(
   stored: string | null | undefined,
-  acreFree: boolean
+  hosted: readonly HostedModel[],
+  primaryHosted: HostedModel | null
 ): string | undefined {
   if (!stored) return undefined;
-  const resolved = resolveOpenRouterModelId(stored);
-  if (acreFree && resolved === ACRE_FREE_OPENROUTER_ID) return undefined;
+  const resolved = resolveUpstreamModelId(hosted, stored);
+  if (primaryHosted && resolved === primaryHosted.upstreamModelId) return undefined;
   return resolved;
 }
 

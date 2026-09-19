@@ -56,7 +56,8 @@ rather than resumes.
 The same prompt appears when the agent stops with items still open on its checklist, worded to say
 how many.
 
-A.CRE Free is pinned to 200 turns and does not show this setting.
+<!-- edition:include how-it-works/hosted-turns -->
+<!-- /edition:include -->
 
 ## Steering a run
 

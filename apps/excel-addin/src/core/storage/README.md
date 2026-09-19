@@ -16,12 +16,12 @@ await settings.setApiKey("sk-or-...");
 await settings.setModelPref({ modelId: "anthropic/claude-opus-4-7", reasoning: "high" });
 ```
 
-Types exported: `SettingsStore`, `StorageBackend`, `ModelPref`,
-`ReasoningLevel`, and `AcreFreeSession`.
+Types exported: `SettingsStore`, `StorageBackend`, `ModelPref`, and
+`ReasoningLevel`.
 
 ## Storage backend
 
-`createSettingsStore` accepts an optional `StorageBackend`. Production Excel omits it and gets `OfficeRuntime.storage`. Tests and the **browser preview** (Vite at `https://localhost:3000` outside Excel) pass `inMemoryBackend()` so the OpenRouter key and A.CRE Free session stay in the JS heap for that page load and are **never written to disk, localStorage, IndexedDB, or the repo**.
+`createSettingsStore` accepts an optional `StorageBackend`. Production Excel omits it and gets `OfficeRuntime.storage`. Tests and the **browser preview** (Vite at `https://localhost:3000` outside Excel) pass `inMemoryBackend()` so the OpenRouter key stays in the JS heap for that page load and are **never written to disk, localStorage, IndexedDB, or the repo**.
 
 ```ts
 // Tests and browser preview — key is not persisted
@@ -35,8 +35,6 @@ Do not add a `localStorage` backend for the API key. Office's per-add-in storage
 
 - `excelente.openrouter.apiKey` — raw OpenRouter API key string
 - `excelente.openrouter.modelPref` — JSON `{ modelId, reasoning }`
-- `excelente.acreFree.session` — verified email display value, signed access
-  token, and expiry; removable through **Sign out of A.CRE Free** in Settings
 
 The `excelente.openrouter.` prefix avoids collisions with other settings.
 

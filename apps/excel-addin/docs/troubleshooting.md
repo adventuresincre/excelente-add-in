@@ -22,8 +22,10 @@ Exactly what it says. Close the pane and reopen it. Excel holds the old bundle u
 
 ## The agent will not send anything
 
-**Finish setup above to begin** means setup is incomplete. You need both a model selected and either
-an OpenRouter key or A.CRE Free chosen. See [Connect a model](/documentation/connect-a-model/).
+<!-- edition:include troubleshooting/setup-incomplete -->
+**Finish setup above to begin** means setup is incomplete. You need an OpenRouter key saved and a
+model selected. See [Connect a model](/documentation/connect-a-model/).
+<!-- /edition:include -->
 
 ## Requests fail right after adding a key
 

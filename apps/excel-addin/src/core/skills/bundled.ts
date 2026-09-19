@@ -9,6 +9,10 @@ import type { Skill, SkillSource, SkillSummary } from "./types";
  *
  * Reaching outside `src/` is intentional — skills are first-class
  * user-visible content, not source code.
+ *
+ * That folder is the set every edition ships. An edition may bundle more
+ * (`Edition.bundledSkills`); the composition root merges them in with
+ * `withExtraSkillFiles` so this module stays edition-free.
  */
 const SKILL_FILES_UPPER = import.meta.glob("../../../skills/*/SKILL.md", {
   query: "?raw",
@@ -46,12 +50,35 @@ interface FolderEntry {
  * Tests can pass `files` and `resourceFiles` directly to inject synthetic
  * skills without touching the filesystem.
  */
-export function bundledSkillSource(files?: {
-  skill?: Record<string, string>;
-  resources?: Record<string, string>;
-}): SkillSource {
-  const skillFiles = files?.skill ?? { ...SKILL_FILES_UPPER, ...SKILL_FILES_LOWER };
-  const resourceFiles = files?.resources ?? RESOURCE_FILES;
+export interface BundledSkillFiles {
+  skill: Record<string, string>;
+  resources: Record<string, string>;
+}
+
+/** The skills under `apps/excel-addin/skills/`, as globbed at build time. */
+export function sharedBundledFiles(): BundledSkillFiles {
+  return { skill: { ...SKILL_FILES_UPPER, ...SKILL_FILES_LOWER }, resources: RESOURCE_FILES };
+}
+
+/**
+ * Merge an edition's extra skills on top of a base set. Keys are glob paths,
+ * so two entries only collide when two folders share a name; the extra wins
+ * and `buildSkills` warns if the frontmatter disagrees with the folder.
+ */
+export function withExtraSkillFiles(
+  base: BundledSkillFiles,
+  extra: Partial<BundledSkillFiles>
+): BundledSkillFiles {
+  return {
+    skill: { ...base.skill, ...(extra.skill ?? {}) },
+    resources: { ...base.resources, ...(extra.resources ?? {}) },
+  };
+}
+
+export function bundledSkillSource(files?: Partial<BundledSkillFiles>): SkillSource {
+  const shared = sharedBundledFiles();
+  const skillFiles = files?.skill ?? shared.skill;
+  const resourceFiles = files?.resources ?? shared.resources;
   const skills = buildSkills(skillFiles, resourceFiles);
 
   return {
