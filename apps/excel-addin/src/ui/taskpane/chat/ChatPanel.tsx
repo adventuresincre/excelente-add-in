@@ -434,7 +434,7 @@ export function ChatPanel({
             forward there, and two prompts for one key would compete. */}
         {!setupComplete && !pendingName && <ConnectSetup />}
         {setupComplete && stream.items.length === 0 && !stream.error && (
-          <EmptyState modelId={modelPref?.modelId ?? null} locked={locked} />
+          <EmptyState modelId={modelPref?.modelId ?? null} locked={locked} hasKey={Boolean(apiKey)} />
         )}
         {stream.items.map((item) => (
           <ItemView
@@ -678,8 +678,11 @@ function isChangeCardItem(item: TurnItem): item is ToolItem {
 function EmptyState({
   modelId,
   locked,
+  hasKey,
 }: {
   modelId: string | null;
+  /** An OpenRouter key is saved; hosted intros drop the "add a key" nudge. */
+  hasKey: boolean;
   /**
    * A chosen model is waiting on a key and the composer is locked. Only the
    * mark and the headline show; the notice at the foot of the transcript
@@ -699,7 +702,7 @@ function EmptyState({
       </h2>
       {!locked &&
         (hosted ? (
-          <hosted.ChatIntro />
+          <hosted.ChatIntro hasKey={hasKey} />
         ) : (
           <p>
             You&apos;re talking to <code>{modelId}</code>.

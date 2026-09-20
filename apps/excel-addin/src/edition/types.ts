@@ -57,8 +57,12 @@ export interface HostedModel {
    * lookup that names the pinned model only runs where the name is shown.
    */
   LiveName: ComponentType;
-  /** Empty-chat intro paragraph shown while this model is the one running. */
-  ChatIntro: ComponentType;
+  /**
+   * Empty-chat intro paragraph shown while this model is the one running.
+   * `hasKey` says whether an OpenRouter key is already saved, so the copy
+   * can stop suggesting one.
+   */
+  ChatIntro: ComponentType<{ hasKey: boolean }>;
   /** One sentence under the setup picker when this row is chosen. */
   setupPickHint?: string;
   /** One sentence under the setup picker when this row is picked but locked. */
