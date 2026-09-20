@@ -60,7 +60,13 @@ export interface ModelInfo {
    * rank to append), `lab` is the host, and the row sits in its own picker
    * group before every lab. Never sent to OpenRouter.
    */
-  hosted?: { lab: string; groupKey: string; groupLabel: string };
+  hosted?: {
+    lab: string;
+    groupKey: string;
+    groupLabel: string;
+    /** The user may not run this row right now (no membership); the picker greys it. */
+    locked?: boolean;
+  };
   contextLength: number;
   pricing: {
     /** USD per 1 prompt token. */

@@ -20,11 +20,16 @@ import { useExcelSelection } from "./useExcelSelection";
 import type { ModelPref } from "../../../core/storage";
 import { BUILTIN_COMMANDS, type SlashCommand } from "../../../core/commands";
 import { isSetupComplete } from "../../../core/config";
-import { edition } from "@edition";
+import { edition, useEntitledHostedIds, useHostedPickerRows } from "@edition";
 import { hostedModelFor, resolveUpstreamModelId } from "../../../edition/hosted";
 import { ConnectSetup } from "./ConnectSetup";
 import "./chat.css";
-import { PendingModelNotice, focusApiKeyField, pendingModelName } from "../pending-model";
+import {
+  PendingModelNotice,
+  focusApiKeyField,
+  focusEditionSettingsSection,
+  pendingModelName,
+} from "../pending-model";
 import { useModels } from "../settings/useModels";
 
 /**
@@ -93,7 +98,9 @@ export function ChatPanel({
   modelPref,
   onOpenSettings,
 }: ChatPanelProps) {
-  const { openrouter, sessionCost, pendingModelId, setModelPref } = useApp();
+  const { openrouter, sessionCost, pendingModelId, pendingReason, setModelPref } = useApp();
+  const entitled = useEntitledHostedIds();
+  const hostedRows = useHostedPickerRows();
   const composerRef = useRef<ComposerHandle>(null);
   const selection = useExcelSelection();
   const setupComplete = isSetupComplete(apiKey, modelPref?.modelId ?? null);
@@ -101,10 +108,12 @@ export function ChatPanel({
   // The chosen model that cannot run yet, named for the notice and the chip.
   // The list is public and cached an hour, so this rides on Settings' fetch.
   const { models: catalogue } = useModels(openrouter, apiKey);
-  const pendingName = pendingModelId ? pendingModelName(catalogue, pendingModelId) : null;
-  // The edition's keyless fallback (a hosted tier), or null when a waiting
-  // choice has nothing to run on and only a key can unlock the chat.
-  const fallback = edition.keylessFallback;
+  const pendingName = pendingModelId ? pendingModelName(catalogue, pendingModelId, hostedRows) : null;
+  // The edition's keyless fallback (a hosted tier) when this user may run
+  // it, or null when a waiting choice has nothing to run on and only a key
+  // (or a membership) can unlock the chat.
+  const fallback =
+    edition.keylessFallback && entitled.has(edition.keylessFallback.id) ? edition.keylessFallback : null;
   const useFallback = useCallback(() => {
     if (fallback) void setModelPref(fallback.modelPref());
   }, [setModelPref, fallback]);
@@ -114,6 +123,10 @@ export function ChatPanel({
   const addKey = useCallback(() => {
     onOpenSettings();
     requestAnimationFrame(() => focusApiKeyField());
+  }, [onOpenSettings]);
+  const connectMembership = useCallback(() => {
+    onOpenSettings();
+    requestAnimationFrame(() => focusEditionSettingsSection());
   }, [onOpenSettings]);
 
   // The plan sheet slides over the transcript rather than living on its own
@@ -325,7 +338,9 @@ export function ChatPanel({
   const locked = Boolean(pendingName);
   const disabled = !setupComplete || locked;
   const disabledHint = locked
-    ? `${pendingName} needs an OpenRouter key. Add one${fallback ? `, or stay on ${fallback.name}` : ""}.`
+    ? pendingReason === "membership"
+      ? `${pendingName} needs a connected membership. Connect one in Settings, or add an OpenRouter key.`
+      : `${pendingName} needs an OpenRouter key. Add one${fallback ? `, or stay on ${fallback.name}` : ""}.`
     : "Finish setup above to begin.";
 
   const onDragEnter = useCallback(
@@ -444,7 +459,9 @@ export function ChatPanel({
           <PendingModelNotice
             modelName={pendingName}
             surface="chat"
+            reason={pendingReason ?? "key"}
             onAddKey={addKey}
+            onConnectMembership={connectMembership}
             fallbackName={fallback ? <fallback.LiveName /> : undefined}
             onUseFallback={fallback ? useFallback : undefined}
           />
@@ -548,7 +565,10 @@ export function ChatPanel({
         canUndo={stream.canUndo}
         onUndo={() => void handleUndo()}
         onOpenCapabilities={onOpenCapabilities}
-        pendingModel={pendingName ? { name: pendingName, onOpenSettings } : undefined}
+        pendingModel={
+          pendingName ? { name: pendingName, reason: pendingReason ?? "key", onOpenSettings } : undefined
+        }
+        onOpenSettings={onOpenSettings}
       />
 
       {/* Over the panel rather than beside it, on the same absolute-overlay

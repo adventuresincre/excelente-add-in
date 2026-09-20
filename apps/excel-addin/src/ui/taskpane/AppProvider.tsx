@@ -67,8 +67,8 @@ import {
   type SkillStore,
 } from "../../core/skills";
 import { createPdfRasterizer, type PdfRasterizer } from "../../core/vision";
-import { resolveRunningPref } from "./pending-model";
-import { edition } from "@edition";
+import { resolveRunningPref, type PendingReason } from "./pending-model";
+import { edition, useEntitledHostedIds } from "@edition";
 import {
   createAuthClient,
   createSessionStore,
@@ -114,8 +114,10 @@ export interface AppContextValue {
    * that sends a request reads this one.
    */
   runningModelPref: ModelPref | null;
-  /** The chosen model that is waiting for a key, or null. */
+  /** The chosen model that is waiting for a key or a membership, or null. */
   pendingModelId: string | null;
+  /** Why it waits, when it does. */
+  pendingReason: PendingReason | null;
   setApiKey: (key: string) => Promise<void>;
   clearApiKey: () => Promise<void>;
   setModelPref: (pref: ModelPref) => Promise<void>;
@@ -698,10 +700,19 @@ export function AppProvider({
     setPerModelStats({});
   }, []);
 
-  const { running: runningModelPref, pendingModelId } = useMemo(
-    () => resolveRunningPref(modelPref, apiKey, edition),
-    [modelPref, apiKey]
+  // Which hosted models this user may run, per the edition (a membership
+  // in the hosted edition; never, in the community edition).
+  const entitledHostedIds = useEntitledHostedIds();
+  const { running: runningModelPref, pendingModelId, pendingReason } = useMemo(
+    () => resolveRunningPref(modelPref, apiKey, edition, entitledHostedIds),
+    [modelPref, apiKey, entitledHostedIds]
   );
+
+  // Hand the edition the services it may use, once the manager exists. The
+  // edition never imports this provider (it would import the edition back).
+  useEffect(() => {
+    edition.attach?.({ mcp, enableConnector, disableConnector });
+  }, [mcp, enableConnector, disableConnector]);
 
   const value: AppContextValue = useMemo(
     () => ({
@@ -710,6 +721,7 @@ export function AppProvider({
       modelPref,
       runningModelPref,
       pendingModelId,
+      pendingReason,
       setApiKey,
       clearApiKey,
       setModelPref,
@@ -752,6 +764,7 @@ export function AppProvider({
       modelPref,
       runningModelPref,
       pendingModelId,
+      pendingReason,
       setApiKey,
       clearApiKey,
       setModelPref,

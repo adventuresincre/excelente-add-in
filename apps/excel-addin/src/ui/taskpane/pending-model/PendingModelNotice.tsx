@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SystemNotice } from "../SystemNotice";
+import type { PendingReason } from "./pending-model";
 import "./pending-model.css";
 
 export interface PendingModelNoticeProps {
@@ -7,11 +8,15 @@ export interface PendingModelNoticeProps {
   modelName: string;
   /** Where the notice sits; the wording differs slightly by surface. */
   surface: "chat" | "settings";
+  /** Why the model waits: no key for it, or no membership for it. */
+  reason: PendingReason;
   onAddKey: () => void;
+  /** Bring the edition's membership controls into view. Required for "membership". */
+  onConnectMembership?: () => void;
   /**
    * The edition's keyless fallback, named live (a hosted tier shows the
-   * model it is pinned to right now). Omit both when the edition has none:
-   * the notice then offers the key alone.
+   * model it is pinned to right now). Omit both when the edition has none
+   * or the user is not entitled to it: the notice then offers the key alone.
    */
   fallbackName?: ReactNode;
   onUseFallback?: () => void;
@@ -27,10 +32,49 @@ export interface PendingModelNoticeProps {
 export function PendingModelNotice({
   modelName,
   surface,
+  reason,
   onAddKey,
+  onConnectMembership,
   fallbackName,
   onUseFallback,
 }: PendingModelNoticeProps) {
+  if (reason === "membership") {
+    return (
+      <SystemNotice
+        state="needs-you"
+        title={
+          surface === "settings"
+            ? `Saved. ${modelName} needs a connected membership to run.`
+            : `${modelName} needs a connected membership to run.`
+        }
+        className="pending-model-notice"
+        actions={
+          <>
+            <button
+              type="button"
+              className="system-notice__btn system-notice__btn--dark"
+              onClick={onConnectMembership}
+            >
+              Connect membership
+            </button>
+            <button
+              type="button"
+              className="system-notice__btn system-notice__btn--quiet"
+              onClick={onAddKey}
+            >
+              Add OpenRouter key
+            </button>
+          </>
+        }
+      >
+        <p>
+          Connect CRE Agents or the A.CRE Intelligence Hub and it answers your next message. Or add
+          your own OpenRouter key and choose any model. Chat is paused until you do one of them.
+        </p>
+      </SystemNotice>
+    );
+  }
+
   const hasFallback = Boolean(onUseFallback);
   const title =
     surface === "settings"
