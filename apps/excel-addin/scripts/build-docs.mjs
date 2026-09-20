@@ -347,7 +347,9 @@ const pages = files.map((file) => {
   const data = parsed.data;
   // Resolved before anything reads the body, so the rendered page, the
   // copy-page markdown and the search index all describe this edition.
-  const body = resolveEditionIncludes(parsed.body, file);
+  // Line endings normalised first: a Windows checkout with autocrlf hands
+  // us CRLF, and the include markers are matched on their own lines.
+  const body = resolveEditionIncludes(parsed.body.replace(/\r\n/g, "\n"), file);
   if (/<!--\s*\/?edition:include/.test(body)) {
     throw new Error(
       `${file}: an edition:include block is malformed (markers must sit on their own lines)`
