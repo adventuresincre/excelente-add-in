@@ -11,7 +11,7 @@ so the tool registry can bulk-remove them on disconnect.
 | `createMcpClient({ serverName, url, getAuthToken?, fetchImpl? })` | One server connection: `initialize()`, `listTools()`, `callTool()`. After `initialize()`, `client.instructions` holds the server's own usage guidance from the handshake (`null` when absent). |
 | `bridgeMcpClient(client)` / `bridgeMcpTool(client, tool)` | Convert MCP tools into Excelente `ToolDef`s named `mcp_<server>__<tool>`; `readOnlyHint` → Read, everything else → Write. |
 | `mcpToolName`, `mcpSourceTag`, `MCP_SOURCE_PREFIX` | Naming helpers shared with the UI gate (`gateInactiveConnectors`). |
-| `createMcpManager({ store, registry, getAuthToken? })` | Connection lifecycle for every persisted server. `getStatuses()` / `subscribe()` expose `McpServerStatus` rows; a connected state carries `toolCount` and `instructions`. |
+| `createMcpManager({ store, registry })` | Connection lifecycle for every persisted server. `getStatuses()` / `subscribe()` expose `McpServerStatus` rows; a connected state carries `toolCount` and `instructions`. |
 | `ACRE_MCP_PRESETS` | The one-click A.CRE presets (CRE Agents / Vic, A.CRE Intelligence Hub). Each has `id`, `name`, `label`, `shortLabel`, `description`, `icon`, `connect`, and an optional `priming` recipe. |
 | `primeConnectors(input)` | Harness-side auto-invoke for active, connected servers (below). |
 | `presetForServer`, `shouldRunFirstTurn`, `clampInstructions` | Pure helpers used by priming and the composer's brand toggles. |

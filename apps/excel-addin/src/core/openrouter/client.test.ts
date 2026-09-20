@@ -510,56 +510,6 @@ describe("createOpenRouterClient.chat", () => {
     });
   });
 
-  it("parses the relay's credits_remaining extension into usage", async () => {
-    const body =
-      sseChunk({ choices: [{ index: 0, delta: { content: "ok" } }] }) +
-      sseChunk({
-        choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-        usage: {
-          prompt_tokens: 100,
-          completion_tokens: 10,
-          total_tokens: 110,
-          cost: 0.0123,
-          credits_remaining: 9876,
-        },
-      }) +
-      `data: [DONE]\n\n`;
-    const fetch = vi.fn().mockResolvedValue(sseResponse(body));
-    const client = createOpenRouterClient({ fetch });
-    const events = await collect(
-      client.chat({
-        apiKey: "k",
-        model: "anthropic/claude-sonnet-4-6",
-        messages: [{ role: "user", content: "hi" }],
-      })
-    );
-    const usage = events.find((e) => e.type === "usage");
-    expect(usage).toMatchObject({ type: "usage", usage: { creditsRemaining: 9876 } });
-  });
-
-  it("leaves creditsRemaining undefined on the direct (BYOK) path", async () => {
-    const body =
-      sseChunk({ choices: [{ index: 0, delta: { content: "ok" } }] }) +
-      sseChunk({
-        choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-        usage: { prompt_tokens: 100, completion_tokens: 5, total_tokens: 105, cost: 0.001 },
-      }) +
-      `data: [DONE]\n\n`;
-    const fetch = vi.fn().mockResolvedValue(sseResponse(body));
-    const client = createOpenRouterClient({ fetch });
-    const events = await collect(
-      client.chat({
-        apiKey: "k",
-        model: "anthropic/claude-sonnet-4-6",
-        messages: [{ role: "user", content: "hi" }],
-      })
-    );
-    const usage = events.find((e) => e.type === "usage");
-    expect(
-      (usage as { usage?: { creditsRemaining?: number } }).usage?.creditsRemaining
-    ).toBeUndefined();
-  });
-
   it("leaves cacheReadTokens undefined when the provider doesn't report it", async () => {
     const body =
       sseChunk({ choices: [{ index: 0, delta: { content: "ok" } }] }) +

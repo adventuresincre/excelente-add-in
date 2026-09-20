@@ -26,14 +26,14 @@ export interface McpServerConfig {
   addedAt: number;
   /**
    * How requests to this server authenticate. Absent (default) = no auth
-   * headers. "member-token" = the A.CRE member session token is attached
-   * as `Authorization: Bearer …` on every request (mirrors
-   * `AcreMcpEntry.authMode`). "oauth" = the server runs its own MCP OAuth
-   * sign-in (e.g. CRE Agents); tokens live in `oauth`. Rows persisted
-   * before this field existed parse as unauthenticated, which matches
-   * their behavior at the time.
+   * headers (a personal MCP URL carries its credential in `url`). "oauth" =
+   * the server runs its own MCP OAuth sign-in (e.g. CRE Agents); tokens live
+   * in `oauth`. Rows persisted before this field existed parse as
+   * unauthenticated, which matches their behavior at the time. (A
+   * "member-token" mode for a never-shipped A.CRE sign-in was retired on
+   * 2026-09-19; no persisted row ever carried it.)
    */
-  auth?: "member-token" | "oauth";
+  auth?: "oauth";
   /**
    * OAuth tokens for `auth: "oauth"` servers. Stored alongside the config
    * — same sensitivity posture as a personal MCP URL with an embedded

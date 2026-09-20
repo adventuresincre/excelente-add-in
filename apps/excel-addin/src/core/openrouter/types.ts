@@ -206,10 +206,4 @@ export interface Usage {
    * subsequent turns cheap.
    */
   cacheCreationTokens?: number;
-  /**
-   * Authoritative member credit balance AFTER this call, echoed by the A.CRE
-   * relay (1 credit = 1¢ of underlying cost). Absent on the direct OpenRouter
-   * (BYOK) path. The UI trusts this as the live balance — no polling required.
-   */
-  creditsRemaining?: number;
 }

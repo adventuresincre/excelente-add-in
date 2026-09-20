@@ -41,15 +41,13 @@ export interface McpManager {
   /** Subscribe to status changes. Returns an unsubscribe function. */
   subscribe(listener: (statuses: McpServerStatus[]) => void): () => void;
   /** Add + persist a new server, then connect to it. Rejects on duplicate
-   * name. `auth: "member-token"` attaches the member session token (from
-   * the manager's `getAuthToken`) to every request; `auth: "oauth"` sends
-   * the server's own tokens (pass them in `oauth` — obtained via
-   * `runMcpOAuthFlow`); `presetId` records that the server came from a
-   * one-click A.CRE preset. */
+   * name. `auth: "oauth"` sends the server's own tokens (pass them in
+   * `oauth` — obtained via `runMcpOAuthFlow`); `presetId` records that the
+   * server came from a one-click A.CRE preset. */
   addServer(args: {
     name: string;
     url: string;
-    auth?: "member-token" | "oauth";
+    auth?: "oauth";
     oauth?: McpOAuthTokens;
     presetId?: string;
   }): Promise<void>;
@@ -66,13 +64,6 @@ interface ServerSlot {
 export function createMcpManager(args: {
   store: McpServerStore;
   registry: ToolRegistry;
-  /**
-   * Member session-token supplier for servers configured with
-   * `auth: "member-token"`. Consulted per request (via the client), so a
-   * token refresh propagates without reconnecting. Unauthenticated
-   * servers never see it.
-   */
-  getAuthToken?: () => string | null;
   /** Override fetch (OAuth token refresh) in tests. */
   fetchImpl?: typeof fetch;
   /** Override the client factory in tests. */
@@ -82,7 +73,7 @@ export function createMcpManager(args: {
     getAuthToken?: () => string | null;
   }) => McpClient;
 }): McpManager {
-  const { store, registry, getAuthToken } = args;
+  const { store, registry } = args;
   const clientFactory = args.clientFactory ?? createMcpClient;
   const fetchImpl = args.fetchImpl ?? globalThis.fetch.bind(globalThis);
 
@@ -109,7 +100,6 @@ export function createMcpManager(args: {
 
   /** Per-request token getter appropriate to the server's auth mode. */
   function authGetterFor(config: McpServerConfig): (() => string | null) | undefined {
-    if (config.auth === "member-token") return getAuthToken;
     if (config.auth === "oauth") {
       const serverId = config.id;
       // Read through the slot so a refresh-at-connect is picked up.

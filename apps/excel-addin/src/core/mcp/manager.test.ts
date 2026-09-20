@@ -142,7 +142,7 @@ describe("McpManager", () => {
     expect(await store.list()).toHaveLength(1);
   });
 
-  it("passes the token getter to the client only for member-token servers, and persists auth + presetId", async () => {
+  it("passes a token getter to the client only for oauth servers, and persists auth + presetId", async () => {
     const store = createInMemoryMcpServerStore();
     const registry = newRegistry();
     const seenFactoryArgs: Array<{
@@ -150,11 +150,9 @@ describe("McpManager", () => {
       getAuthToken?: () => string | null;
     }> = [];
     const factory = fakeClientFactory();
-    const getAuthToken = () => "member-token";
     const manager = createMcpManager({
       store,
       registry,
-      getAuthToken,
       clientFactory: (args) => {
         seenFactoryArgs.push(args);
         return factory(args);
@@ -162,56 +160,31 @@ describe("McpManager", () => {
     });
 
     await manager.addServer({
-      name: "acre-intelligence-hub",
-      url: "https://hub.example.com/mcp",
-      auth: "member-token",
-      presetId: "acre-intelligence-hub",
+      name: "cre-agents",
+      url: "https://app.example.com/api/mcp",
+      auth: "oauth",
+      oauth: {
+        accessToken: "access-token",
+        tokenEndpoint: "https://app.example.com/oauth/token",
+        clientId: "excelente",
+        resource: "https://app.example.com/api/mcp",
+      },
+      presetId: "cre-agents",
     });
     await manager.addServer({ name: "open", url: "https://mcp.example.com" });
 
-    const authed = seenFactoryArgs.find((a) => a.serverName === "acre-intelligence-hub");
+    const authed = seenFactoryArgs.find((a) => a.serverName === "cre-agents");
     const anonymous = seenFactoryArgs.find((a) => a.serverName === "open");
-    expect(authed?.getAuthToken?.()).toBe("member-token");
+    expect(authed?.getAuthToken?.()).toBe("access-token");
     expect(anonymous?.getAuthToken).toBeUndefined();
 
     const persisted = await store.list();
-    const hub = persisted.find((c) => c.name === "acre-intelligence-hub");
-    expect(hub?.auth).toBe("member-token");
-    expect(hub?.presetId).toBe("acre-intelligence-hub");
+    const vic = persisted.find((c) => c.name === "cre-agents");
+    expect(vic?.auth).toBe("oauth");
+    expect(vic?.presetId).toBe("cre-agents");
     const open = persisted.find((c) => c.name === "open");
     expect(open?.auth).toBeUndefined();
     expect(open?.presetId).toBeUndefined();
-  });
-
-  it("restores member-token auth wiring on initialize() in a fresh session", async () => {
-    const store = createInMemoryMcpServerStore();
-    const manager1 = createMcpManager({
-      store,
-      registry: newRegistry(),
-      clientFactory: fakeClientFactory(),
-    });
-    await manager1.addServer({
-      name: "acre-intelligence-hub",
-      url: "https://hub.example.com/mcp",
-      auth: "member-token",
-      presetId: "acre-intelligence-hub",
-    });
-
-    const seenFactoryArgs: Array<{ getAuthToken?: () => string | null }> = [];
-    const factory = fakeClientFactory();
-    const manager2 = createMcpManager({
-      store,
-      registry: newRegistry(),
-      getAuthToken: () => "restored-token",
-      clientFactory: (args) => {
-        seenFactoryArgs.push(args);
-        return factory(args);
-      },
-    });
-    await manager2.initialize();
-
-    expect(seenFactoryArgs).toHaveLength(1);
-    expect(seenFactoryArgs[0].getAuthToken?.()).toBe("restored-token");
   });
 
   it("oauth servers persist their tokens and send them via the client token getter", async () => {
