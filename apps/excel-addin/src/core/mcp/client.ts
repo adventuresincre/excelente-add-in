@@ -150,7 +150,7 @@ export function createMcpClient(args: {
   url: string;
   /**
    * Bearer-token supplier consulted on EVERY request (not captured at
-   * connect time), so a refreshed member session token is picked up
+   * connect time), so a refreshed OAuth access token is picked up
    * without reconnecting — same philosophy as the relay client. Return
    * null to send the request unauthenticated.
    */
@@ -174,7 +174,7 @@ export function createMcpClient(args: {
     const token = getAuthToken?.() ?? null;
     if (token) {
       // Never put a bearer on the wire in cleartext. The token here is the
-      // member session token or an MCP OAuth access token — either one is a
+      // an MCP OAuth access token — either one is a
       // working credential to anyone on-path. A server configured with an
       // `http://` URL gets an unauthenticated request (and a clear failure)
       // rather than a leaked credential. Loopback is exempt so local MCP

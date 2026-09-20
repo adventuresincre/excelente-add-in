@@ -35,6 +35,8 @@ import { CapabilityMenu, type CapabilitySection } from "./CapabilityMenu";
 import { SpreadsheetDecisionCard } from "./SpreadsheetDecisionCard";
 import { ACRE_MCP_PRESETS, type McpServerStatus } from "../../../core/mcp";
 import { connectorButtons } from "./connector-buttons";
+import { edition } from "@edition";
+import type { PendingReason } from "../pending-model";
 import { PendingModelChip } from "../pending-model";
 
 export interface ComposerProps {
@@ -83,7 +85,9 @@ export interface ComposerProps {
    * Rendered as a chip beside the mode pill so the state survives once the
    * empty-state notice has scrolled away.
    */
-  pendingModel?: { name: string; onOpenSettings: () => void };
+  pendingModel?: { name: string; reason: PendingReason; onOpenSettings: () => void };
+  /** Open the Settings tab; the edition's status control (if any) points there. */
+  onOpenSettings?: () => void;
 }
 
 /**
@@ -146,6 +150,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
     onUndo,
     onOpenCapabilities,
     pendingModel,
+    onOpenSettings,
   },
   ref
 ) {
@@ -848,8 +853,17 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
         {pendingModel && (
           <PendingModelChip
             modelName={pendingModel.name}
+            reason={pendingModel.reason}
             onOpenSettings={pendingModel.onOpenSettings}
           />
+        )}
+        {/* The edition's status control (the hosted edition's included-usage
+            ring), left of the connector marks it belongs with. */}
+        {edition.ComposerStatus && onOpenSettings && (
+          <>
+            <span className="composer__brand-sep" aria-hidden="true" />
+            <edition.ComposerStatus onOpenSettings={onOpenSettings} />
+          </>
         )}
         {brandButtons.length > 0 && <span className="composer__brand-sep" aria-hidden="true" />}
         {brandButtons.map((b) => (

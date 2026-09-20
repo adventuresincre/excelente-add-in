@@ -4,38 +4,43 @@ import { ApiKeyField } from "../settings/ApiKeyField";
 import { ModelPicker } from "../settings/ModelPicker";
 import { useModels } from "../settings/useModels";
 import { DEFAULT_PUBLIC_CONFIG, resolveByokDefaults } from "../../../core/config";
-import { edition } from "@edition";
+import { edition, useEntitledHostedIds } from "@edition";
 import { hostedModelFor } from "../../../edition/hosted";
 import type { HostedModel } from "../../../edition/types";
 import { OnboardConnectors } from "./OnboardConnectors";
 
 /**
- * Wizard steps. Two openings, chosen by the edition:
+ * Wizard steps.
  *
- *   - `connect`: "Connect your model." A list of providers with the key
- *     field inline. Today that list is OpenRouter alone; it is a list so a
- *     second provider slots in beside it rather than behind another screen.
- *     Used when the edition offers nothing without a key (community).
- *   - `start` then `key`: "Get started" with a choice between an OpenRouter
- *     key and the edition's hosted alternative, then the key on its own
- *     screen. Used when `edition.setup.StartAlternative` exists.
- *
- * Both lead to `model`, then `connectors`.
+ *   intro       the edition's own opening screens (`edition.setup.Intro`),
+ *               when it has any: a choice of path, a sign-in, a question.
+ *               The community edition has none and opens on `connect`.
+ *   connect     "Connect your model." A list of providers with the key
+ *               field inline. Today that list is OpenRouter alone; it is a
+ *               list so a second provider slots in beside it.
+ *   model       pick the primary model.
+ *   connectors  the shared connectors step. Skipped when the intro already
+ *               signed the user in to their memberships.
  */
-type Step = "connect" | "start" | "key" | "model" | "connectors";
+type Step = "intro" | "connect" | "model" | "connectors";
 
 /**
  * Chat-first first-run. Stays on Chat (no bounce to Settings). Model
- * preference is written only after the connector step so that step is not
- * skipped the moment a model is chosen.
+ * preference is written only at the end so no step is skipped the moment a
+ * model is chosen.
  */
 export function ConnectSetup() {
   const { apiKey, setApiKey, clearApiKey, setModelPref, openrouter } = useApp();
-  const StartAlternative = edition.setup.StartAlternative;
-  const opening: Step = StartAlternative ? "start" : "connect";
-  const keyStep: Step = StartAlternative ? "key" : "connect";
+  const Intro = edition.setup.Intro;
+  const entitled = useEntitledHostedIds();
+  const opening: Step = Intro ? "intro" : "connect";
   const [step, setStep] = useState<Step>(apiKey ? "model" : opening);
   const [picked, setPicked] = useState("");
+  const [lockedNote, setLockedNote] = useState<string | null>(null);
+  // Set when the intro signed the user in to a membership and chose a hosted
+  // model: the connectors step is then redundant, and the hosted row is
+  // preselected so a key-adder can simply Continue.
+  const [memberPath, setMemberPath] = useState(false);
   const { models, loading, error } = useModels(openrouter, apiKey);
   const toolModels = useMemo(() => models.filter((m) => m.supportsTools), [models]);
 
@@ -67,9 +72,37 @@ export function ConnectSetup() {
     });
   }
 
-  function chooseHosted(model: HostedModel) {
+  function onOwnModel() {
+    setStep("connect");
+  }
+
+  function onHosted(model: HostedModel, alsoOwnKey: boolean) {
+    if (!alsoOwnKey) {
+      void finish(model.id);
+      return;
+    }
+    setMemberPath(true);
     setPicked(model.id);
-    setStep("connectors");
+    setStep("connect");
+  }
+
+  function pick(modelId: string) {
+    const hosted = hostedModelFor(edition.hostedModels, modelId);
+    if (hosted && !entitled.has(hosted.id)) {
+      // A locked row: say why rather than silently ignoring the click.
+      setLockedNote(
+        hosted.lockedHint ??
+          `${hosted.name} is not available to you yet. Choose another model for now.`
+      );
+      return;
+    }
+    setLockedNote(null);
+    setPicked(modelId);
+  }
+
+  function afterModel() {
+    if (memberPath) void finish(picked);
+    else setStep("connectors");
   }
 
   const openRouterSteps = (
@@ -89,6 +122,8 @@ export function ConnectSetup() {
   return (
     <div className="chat-panel__empty">
       <BrandMark />
+      {step === "intro" && Intro && <Intro onOwnModel={onOwnModel} onHosted={onHosted} />}
+
       {step === "connect" && (
         <>
           <h2>
@@ -109,50 +144,13 @@ export function ConnectSetup() {
                 <ApiKeyField storedKey={apiKey} onSave={handleSaveKey} onClear={clearApiKey} />
               </li>
             </ul>
-          </div>
-        </>
-      )}
-
-      {step === "start" && StartAlternative && (
-        <>
-          <h2>
-            Get started with <em className="accent">Excelente</em>.
-          </h2>
-          <p>{edition.setup.intro}</p>
-          <div className="connect-setup__form">
-            <p className="settings-section__hint">
-              Connect your own OpenRouter key to pick hundreds of models (from free to frontier).
-            </p>
-            <button
-              type="button"
-              className="continue-working__btn connect-setup__primary"
-              onClick={() => setStep("key")}
-            >
-              Use an OpenRouter key
-            </button>
-            <div className="connect-setup__or">or</div>
-            <StartAlternative onChooseHosted={chooseHosted} />
-          </div>
-        </>
-      )}
-
-      {step === "key" && (
-        <>
-          <h2>
-            Add your <em className="accent">OpenRouter key</em>.
-          </h2>
-          <p>
-            Excelente uses OpenRouter to talk to ChatGPT, Claude, Gemini, and others. You pay
-            OpenRouter for what you use.
-          </p>
-          <div className="connect-setup__form">
-            {openRouterSteps}
-            <ApiKeyField storedKey={apiKey} onSave={handleSaveKey} onClear={clearApiKey} />
-            <div className="connect-setup__actions">
-              <button type="button" className="btn-secondary" onClick={() => setStep("start")}>
-                Back
-              </button>
-            </div>
+            {Intro && (
+              <div className="connect-setup__actions">
+                <button type="button" className="btn-secondary" onClick={() => setStep("intro")}>
+                  Back
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -175,10 +173,11 @@ export function ConnectSetup() {
               models={toolModels}
               ariaLabel="Primary model"
               value={picked || null}
-              onChange={setPicked}
+              onChange={pick}
               loading={loading}
               error={error}
             />
+            {lockedNote && <p className="settings-section__hint">{lockedNote}</p>}
             {pickedHosted?.setupPickHint && (
               <p className="settings-section__hint">{pickedHosted.setupPickHint}</p>
             )}
@@ -192,14 +191,14 @@ export function ConnectSetup() {
             <div className="connect-setup__actions">
               {/* A mistyped key used to strand people here: the list fails to
                   load, nothing is pickable, and there was no way back. */}
-              <button type="button" className="btn-secondary" onClick={() => setStep(keyStep)}>
+              <button type="button" className="btn-secondary" onClick={() => setStep("connect")}>
                 Change key
               </button>
               <button
                 type="button"
                 className="btn-primary"
                 disabled={!picked || loading}
-                onClick={() => setStep("connectors")}
+                onClick={afterModel}
               >
                 Continue
               </button>

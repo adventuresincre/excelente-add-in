@@ -430,8 +430,8 @@ export function labelForPickerModel(
 ): string {
   // A hosted row already carries its full label (tier plus the live model
   // name) in `name`; the decorations below are meaningless for a
-  // subsidized, server-pinned model.
-  if (m.hosted) return m.name;
+  // subsidized, server-pinned model. A locked row says so.
+  if (m.hosted) return m.hosted.locked ? `🔒 ${m.name} · members only` : m.name;
   const isFree = isOpenRouterFreeModel(m);
   const parts: string[] = [`${isFree ? "🆓 " : ""}${displayName(m)}`];
   const r = ranks?.byId.get(m.id);

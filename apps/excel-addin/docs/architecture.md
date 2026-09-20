@@ -25,9 +25,7 @@ src/
 │   ├── vision/       Image downscaling, PDF rasterization
 │   ├── attachments/  Spreadsheet import
 │   ├── commands/     Slash commands
-│   ├── auth/         Session store and operating mode derivation
-│   ├── relay/        Relay and concierge clients
-│   └── config/       Server-driven config with hardcoded fallback
+│   └── config/       Bundled first-run defaults
 ├── ui/
 │   ├── taskpane/     React components: chat, settings, skills, history, plan, capabilities
 │   └── design/       tokens.css
@@ -115,14 +113,6 @@ needs an `<AppDomains>` entry in `manifest.template.xml`.
 OpenRouter `fetch`; use the context from `AppProvider.tsx` and the `useAgentStream` bridge. Tokens
 from `src/ui/design/tokens.css`.
 
-## Code the UI cannot reach
-
-`core/auth`, `core/relay`, and parts of `core/config` implement an authenticated member mode with a
-relay and metered credits. It is written and tested, and **nothing in the shipped UI renders it**.
-`AuthDialog.tsx` is never mounted, and `deriveOperatingMode` is not called outside its own module.
-
-Worth knowing before you spend an afternoon tracing why a member session never appears. In a fork you
-can delete that machinery or wire it up, and either is a real decision rather than a bug fix.
 
 ## Verifying
 

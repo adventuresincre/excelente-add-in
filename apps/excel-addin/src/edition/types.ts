@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { McpManager } from "../core/mcp";
 import type { ModelInfo, OpenRouterClient } from "../core/openrouter";
 import type { ModelPref } from "../core/storage";
 
@@ -14,7 +15,8 @@ import type { ModelPref } from "../core/storage";
  *   - `community` ships in the public repository. Bring your own OpenRouter
  *     key; no hosted models; the five CC BY skills.
  *   - Other editions add what a hosted distribution needs: models the host
- *     pays for and pins server-side, sign-in, extra skills, and copy.
+ *     pays for and pins server-side, memberships that unlock them, extra
+ *     skills, and copy.
  *
  * Rules that keep the seam clean (enforced by `scripts/check-edition-boundary.mjs`):
  *
@@ -31,7 +33,8 @@ import type { ModelPref } from "../core/storage";
  * A model the edition hosts itself. The user has no key for it; the edition
  * supplies a client that reaches a host which holds the credential and pins
  * the real model server-side. In the picker it is a synthetic row (never in
- * the OpenRouter list) that sits in its own group before every lab.
+ * the OpenRouter list) that sits in its own group before every lab. Whether
+ * the user may run it right now is the edition's call (`useEntitledHostedIds`).
  */
 export interface HostedModel {
   /** Sentinel stored in `ModelPref.modelId`. Never a real OpenRouter id. */
@@ -58,8 +61,29 @@ export interface HostedModel {
   ChatIntro: ComponentType;
   /** One sentence under the setup picker when this row is chosen. */
   setupPickHint?: string;
+  /** One sentence under the setup picker when this row is picked but locked. */
+  lockedHint?: string;
   /** Footnote under the session-cost row, for a tier where someone else pays. */
   costNote?: string;
+}
+
+/** What the shared tree hands an edition once, when the app is ready. */
+export interface EditionServices {
+  /** The MCP manager: connector configs, credentials and connection state. */
+  mcp: McpManager;
+  /** Put a connected server's tools in the agent's active toolbelt. */
+  enableConnector: (name: string) => void;
+  disableConnector: (name: string) => void;
+}
+
+export interface SetupIntroProps {
+  /** The user will bring their own OpenRouter key; continue to the key step. */
+  onOwnModel: () => void;
+  /**
+   * The user chose a hosted model. `alsoOwnKey` says whether they also
+   * want to add a key now (key step next) or go straight to chat.
+   */
+  onHosted: (model: HostedModel, alsoOwnKey: boolean) => void;
 }
 
 export interface Edition {
@@ -68,9 +92,9 @@ export interface Edition {
   /** Hosted rows, in picker order. Empty in the community edition. */
   hostedModels: readonly HostedModel[];
   /**
-   * What runs when the chosen model has no key to run on. `null` means
-   * nothing runs: the choice is kept, chat locks, and the only way forward
-   * is a key (see `ui/taskpane/pending-model`).
+   * What runs when the chosen model has no key to run on, provided the user
+   * is entitled to it. `null` means nothing runs: the choice is kept, chat
+   * locks, and the only way forward is a key (see `ui/taskpane/pending-model`).
    */
   keylessFallback: HostedModel | null;
   /**
@@ -78,30 +102,37 @@ export interface Edition {
    * `core/skills/bundled.ts` consumes. Empty maps in the community edition.
    */
   bundledSkills: { skill: Record<string, string>; resources: Record<string, string> };
-  /** First-run wizard copy and the optional alternative to an OpenRouter key. */
+  /** First-run wizard copy and the optional screens before the key step. */
   setup: {
-    /** Sentence(s) under the "Get started" heading. */
+    /** Sentence(s) under the "Connect your model" heading. */
     intro: string;
     /**
-     * Rendered under the "Use an OpenRouter key" button, after an "or".
-     * Calls back with the hosted model the user chose. Omit when the
-     * edition has nothing to offer without a key.
+     * Screens shown before the shared steps: a choice of path, sign-in,
+     * whatever the edition needs. Omit and the wizard opens on the key step.
      */
-    StartAlternative?: ComponentType<{ onChooseHosted: (model: HostedModel) => void }>;
+    Intro?: ComponentType<SetupIntroProps>;
   };
   /**
    * A section rendered in Settings above the model pickers. Decides its own
-   * visibility from the props. Omit when the edition has nothing to say.
+   * visibility from the props. Its root element must carry
+   * `id="edition-settings"` so the shared tree can scroll to it.
    */
   SettingsSection?: ComponentType<{ apiKey: string | null; currentModelId: string | null }>;
+  /** A small status control in the composer toolbar, left of the connector marks. */
+  ComposerStatus?: ComponentType<{ onOpenSettings: () => void }>;
+  /** Called once by the app root with the services the edition may use. */
+  attach?: (services: EditionServices) => void;
 }
 
 /** What `@edition` must export. */
 export interface EditionModule {
   edition: Edition;
   /**
-   * Hook: the hosted rows as synthetic `ModelInfo`s with their live labels,
-   * for the picker. Returns a stable empty array when there are none.
+   * Hook: the hosted rows as synthetic `ModelInfo`s with their live labels
+   * and `hosted.locked` set when the user may not run them, for the picker.
+   * Returns a stable empty array when there are none.
    */
   useHostedPickerRows(): ModelInfo[];
+  /** Hook: ids of the hosted models the user may run right now. Stable when unchanged. */
+  useEntitledHostedIds(): ReadonlySet<string>;
 }

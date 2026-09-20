@@ -30,65 +30,77 @@ const HOST: HostedModel = {
 
 const withFallback = { hostedModels: [HOST], keylessFallback: HOST };
 const noFallback = { hostedModels: [], keylessFallback: null };
+const ENTITLED: ReadonlySet<string> = new Set(["host-tier"]);
+const NOBODY: ReadonlySet<string> = new Set();
 
 describe("resolveRunningPref", () => {
   it("runs nothing when nothing is chosen", () => {
     for (const ed of [withFallback, noFallback]) {
-      expect(resolveRunningPref(null, null, ed)).toEqual({ running: null, pendingModelId: null });
-      expect(resolveRunningPref(null, "sk-or-k", ed)).toEqual({
+      expect(resolveRunningPref(null, null, ed, ENTITLED)).toEqual({
         running: null,
         pendingModelId: null,
+        pendingReason: null,
       });
     }
   });
 
   it("runs the chosen model when a key exists", () => {
-    expect(resolveRunningPref(opus, "sk-or-k", withFallback)).toEqual({
+    expect(resolveRunningPref(opus, "sk-or-k", withFallback, NOBODY)).toEqual({
       running: opus,
       pendingModelId: null,
-    });
-    expect(resolveRunningPref(opus, "sk-or-k", noFallback)).toEqual({
-      running: opus,
-      pendingModelId: null,
+      pendingReason: null,
     });
   });
 
-  it("runs a hosted model when it is the choice, key or no key", () => {
-    expect(resolveRunningPref(hostedPref, null, withFallback)).toEqual({
-      running: hostedPref,
-      pendingModelId: null,
-    });
-    expect(resolveRunningPref(hostedPref, "sk-or-k", withFallback)).toEqual({
-      running: hostedPref,
-      pendingModelId: null,
+  it("runs a hosted model when it is the choice and the user is entitled, key or no key", () => {
+    expect(resolveRunningPref(hostedPref, null, withFallback, ENTITLED).running).toBe(hostedPref);
+    expect(resolveRunningPref(hostedPref, "sk-or-k", withFallback, ENTITLED).running).toBe(
+      hostedPref
+    );
+  });
+
+  // The membership lapsed (disconnected, revoked). The choice is kept, nothing
+  // runs, and the notice points at the memberships section.
+  it("keeps a hosted choice waiting on a membership when the user is not entitled", () => {
+    expect(resolveRunningPref(hostedPref, "sk-or-k", withFallback, NOBODY)).toEqual({
+      running: null,
+      pendingModelId: "host-tier",
+      pendingReason: "membership",
     });
   });
 
   // Spencer, 2026-09-15: the choice is kept, the pane keeps working, and the
   // gap between the two is the incentive to add a key.
-  it("keeps a keyless choice waiting and runs the fallback underneath it", () => {
-    const { running, pendingModelId } = resolveRunningPref(opus, null, withFallback);
+  it("keeps a keyless choice waiting and runs the fallback underneath it, for an entitled user", () => {
+    const { running, pendingModelId, pendingReason } = resolveRunningPref(
+      opus,
+      null,
+      withFallback,
+      ENTITLED
+    );
     expect(pendingModelId).toBe("anthropic/claude-opus-5");
+    expect(pendingReason).toBe("key");
     expect(running?.modelId).toBe("host-tier");
-    // Every role is pinned to the host's model, exactly as a direct pick would be.
     expect(running?.visionModelId).toBe("vendor/pinned");
-    expect(running?.subagentModelId).toBe("vendor/pinned");
-    expect(running?.summaryModelId).toBe("vendor/pinned");
   });
 
-  // The community edition: nothing hosted, so a keyless choice waits with
-  // nothing running. The chat locks and only a key opens it.
-  it("keeps a keyless choice waiting with nothing running when there is no fallback", () => {
-    expect(resolveRunningPref(opus, null, noFallback)).toEqual({
+  // Not a member: the fallback exists in the edition but is not theirs to
+  // use, so nothing runs. Same shape as the community edition.
+  it("runs nothing under a keyless choice when the user is not entitled to the fallback", () => {
+    expect(resolveRunningPref(opus, null, withFallback, NOBODY)).toEqual({
       running: null,
       pendingModelId: "anthropic/claude-opus-5",
+      pendingReason: "key",
+    });
+    expect(resolveRunningPref(opus, null, noFallback, NOBODY)).toEqual({
+      running: null,
+      pendingModelId: "anthropic/claude-opus-5",
+      pendingReason: "key",
     });
   });
 
   it("treats an empty-string key as no key", () => {
-    expect(resolveRunningPref(opus, "", withFallback).pendingModelId).toBe(
-      "anthropic/claude-opus-5"
-    );
+    expect(resolveRunningPref(opus, "", withFallback, ENTITLED).pendingReason).toBe("key");
   });
 });
 
@@ -104,12 +116,22 @@ describe("pendingModelName", () => {
     created: 1,
     family: "claude",
   };
+  const hostedRow: ModelInfo = {
+    ...listed,
+    id: "host-tier",
+    name: "Host Tier (Pinned)",
+    hosted: { lab: "Host", groupKey: "host", groupLabel: "Host" },
+  };
 
   it("uses the catalogue's display name when the model is listed", () => {
     expect(pendingModelName([listed], listed.id)).toBe("Claude Opus 5");
   });
 
-  it("falls back to the id's last segment when it is not", () => {
+  it("names a hosted row from the edition's rows", () => {
+    expect(pendingModelName([listed], "host-tier", [hostedRow])).toBe("Host Tier (Pinned)");
+  });
+
+  it("falls back to the id's last segment when it is not listed", () => {
     expect(pendingModelName([], "vendor/some-model")).toBe("some-model");
   });
 });

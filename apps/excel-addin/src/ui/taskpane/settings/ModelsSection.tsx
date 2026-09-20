@@ -16,9 +16,14 @@ import { useModels } from "./useModels";
 import type { ReasoningLevel } from "../../../core/storage";
 import type { ModelInfo } from "../../../core/openrouter";
 import { DEFAULT_PUBLIC_CONFIG } from "../../../core/config";
-import { edition, useHostedPickerRows } from "@edition";
+import { edition, useEntitledHostedIds, useHostedPickerRows } from "@edition";
 import { hostedModelFor } from "../../../edition/hosted";
-import { PendingModelNotice, focusApiKeyField, pendingModelName } from "../pending-model";
+import {
+  PendingModelNotice,
+  focusApiKeyField,
+  focusEditionSettingsSection,
+  pendingModelName,
+} from "../pending-model";
 
 type Role = "primary" | "subagent" | "vision" | "summary";
 
@@ -44,14 +49,18 @@ type Role = "primary" | "subagent" | "vision" | "summary";
  * `useModels`; without them everything still renders, minus the numbers.
  */
 export function ModelsSection({ sections = "all" }: { sections?: "primary" | "advanced" | "all" }) {
-  const { apiKey, modelPref, setModelPref, openrouter, pendingModelId } = useApp();
+  const { apiKey, modelPref, setModelPref, openrouter, pendingModelId, pendingReason } = useApp();
   const { models, loading, error } = useModels(openrouter, apiKey);
   const [explorer, setExplorer] = useState<Role | null>(null);
   // The edition's own rows (a hosted tier), and the one that runs when a
   // keyless choice waits. Both empty/null in the community edition.
   const hostedRows = useHostedPickerRows();
   const hosted = edition.hostedModels;
-  const fallback = edition.keylessFallback;
+  const entitled = useEntitledHostedIds();
+  const fallback =
+    edition.keylessFallback && entitled.has(edition.keylessFallback.id)
+      ? edition.keylessFallback
+      : null;
 
   const currentModelId = modelPref?.modelId ?? null;
   const currentReasoning: ReasoningLevel = modelPref?.reasoning ?? "off";
@@ -109,6 +118,12 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
     if (!modelId) return;
     const target = hostedModelFor(hosted, modelId);
     if (target) {
+      // A locked row: the pick is an ask for the membership, not a change.
+      // Spencer, 2026-09-19: selecting it takes them to where they connect.
+      if (!entitled.has(target.id)) {
+        focusEditionSettingsSection();
+        return;
+      }
       await setModelPref(target.modelPref());
       return;
     }
@@ -167,7 +182,6 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
   // The list is public, so comparing is open to everyone; a keyless pick
   // waits for a key rather than being refused (pending-model).
   const canExplore = !loading && !error && models.length > 0;
-
 
   const explorerProps = (() => {
     switch (explorer) {
@@ -233,7 +247,7 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
             {!apiKey && (
               <>
                 {hosted.length > 0
-                  ? `Everything except ${hosted.map((h) => h.name).join(" and ")} needs an OpenRouter key; pick one anyway and it waits for the key.`
+                  ? `${hosted.map((h) => h.name).join(" and ")} needs no key; everything else needs an OpenRouter key. Pick one anyway and it waits for the key.`
                   : "Every model needs an OpenRouter key; pick one anyway and it waits for the key."}{" "}
               </>
             )}
@@ -260,8 +274,10 @@ export function ModelsSection({ sections = "all" }: { sections?: "primary" | "ad
           )}
           {pendingModelId && (
             <PendingModelNotice
-              modelName={pendingModelName(toolModels, pendingModelId)}
+              modelName={pendingModelName(toolModels, pendingModelId, hostedRows)}
               surface="settings"
+              reason={pendingReason ?? "key"}
+              onConnectMembership={focusEditionSettingsSection}
               onAddKey={focusApiKeyField}
               fallbackName={fallback ? <fallback.LiveName /> : undefined}
               onUseFallback={fallback ? () => void handlePrimaryChange(fallback.id) : undefined}

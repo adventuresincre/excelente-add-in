@@ -20,9 +20,8 @@ Body text + reference files (`references/*.md`, example workbooks, etc.) follow.
 
 ## Sources
 
-1. **Bundled** — packaged in `apps/excel-addin/skills/`, ships with the add-in
-2. **Local folder** — user points us at a directory; we watch it
-3. **Remote registry** — A.CRE-hosted JSON catalog with one-click installs
+1. **Bundled** — packaged in `apps/excel-addin/skills/` (plus the edition's own folder), ships with the add-in
+2. **User** — created in chat or installed from a zip; persisted in IndexedDB
 
 ## Activation
 

@@ -67,16 +67,8 @@ import {
   type SkillStore,
 } from "../../core/skills";
 import { createPdfRasterizer, type PdfRasterizer } from "../../core/vision";
-import { resolveRunningPref } from "./pending-model";
-import { edition } from "@edition";
-import {
-  createAuthClient,
-  createSessionStore,
-  isSessionValid,
-  type AuthClient,
-  type Session,
-  type SessionStore,
-} from "../../core/auth";
+import { resolveRunningPref, type PendingReason } from "./pending-model";
+import { edition, useEntitledHostedIds } from "@edition";
 
 export type ChatMode = "plan" | "work";
 
@@ -114,8 +106,10 @@ export interface AppContextValue {
    * that sends a request reads this one.
    */
   runningModelPref: ModelPref | null;
-  /** The chosen model that is waiting for a key, or null. */
+  /** The chosen model that is waiting for a key or a membership, or null. */
   pendingModelId: string | null;
+  /** Why it waits, when it does. */
+  pendingReason: PendingReason | null;
   setApiKey: (key: string) => Promise<void>;
   clearApiKey: () => Promise<void>;
   setModelPref: (pref: ModelPref) => Promise<void>;
@@ -193,19 +187,6 @@ export interface AppContextValue {
   workbookId: string;
   /** MCP manager — owns the lifecycle of MCP server connections. */
   mcp: McpManager;
-  /**
-   * A.CRE member session, or null when signed out (or the persisted token
-   * was already expired at load). Member-token MCP servers and (later) the
-   * relay read the live token through the provider's internal ref, so a
-   * sign-in mid-session takes effect without reconnects.
-   */
-  session: Session | null;
-  /** Persist + adopt a session returned by the auth flow (verify-code). */
-  completeSignIn: (session: Session) => Promise<void>;
-  /** Intel Hub auth client for the email one-time-code sign-in flow. */
-  authClient: AuthClient;
-  /** Member-session persistence — exposes the email hint for re-auth prefill. */
-  sessionStore: SessionStore;
   /** Hook registry — handlers subscribe to SessionStart / PreToolUse /
    * PostToolUse / WorkbookSaved / SheetChanged here. Shared across the
    * app. */
@@ -241,10 +222,6 @@ export interface AppProviderProps {
   mcpServerStore?: McpServerStore;
   /** Override the PDF rasterizer (tests). */
   pdfRasterizer?: PdfRasterizer;
-  /** Override the member session store (tests). */
-  sessionStore?: SessionStore;
-  /** Override the Intel Hub auth client (tests). */
-  authClient?: AuthClient;
 }
 
 /**
@@ -294,8 +271,6 @@ export function AppProvider({
   workbookId: workbookIdOverride,
   mcpServerStore: mcpServerStoreOverride,
   pdfRasterizer: pdfRasterizerOverride,
-  sessionStore: sessionStoreOverride,
-  authClient: authClientOverride,
 }: AppProviderProps) {
   const store: SettingsStore = useMemo(
     () => createSettingsStore(storageBackend),
@@ -357,25 +332,11 @@ export function AppProvider({
     () => mcpServerStoreOverride ?? defaultMcpServerStore(),
     [mcpServerStoreOverride]
   );
-  const sessionStore = useMemo(
-    () => sessionStoreOverride ?? createSessionStore(storageBackend),
-    [sessionStoreOverride, storageBackend]
-  );
-  const authClient = useMemo(
-    () => authClientOverride ?? createAuthClient(),
-    [authClientOverride]
-  );
-  // Live token handle for member-token MCP servers. A ref (not state) so the
-  // manager's per-request getter always sees the latest token without the
-  // manager being recreated on sign-in.
-  const sessionRef = useRef<Session | null>(null);
-  const [session, setSessionState] = useState<Session | null>(null);
   const mcp = useMemo(
     () =>
       createMcpManager({
         store: mcpServerStore,
         registry,
-        getAuthToken: () => sessionRef.current?.token ?? null,
       }),
     [mcpServerStore, registry]
   );
@@ -386,40 +347,14 @@ export function AppProvider({
   // even though those events originate outside the chat flow.
   const conversationIdRef = useRef<() => string | null>(() => null);
 
-  // Load the persisted member session BEFORE connecting MCP servers, so
-  // member-token servers authenticate on the boot connect instead of
-  // 401-ing and needing a manual retry. The manager's initialize() is
-  // idempotent — calling it again on hot-reload only reconnects servers
+  // Connect the persisted MCP servers on boot. The manager's initialize()
+  // is idempotent — calling it again on hot-reload only reconnects servers
   // that aren't already connected.
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const persisted = await sessionStore.get();
-        if (!cancelled && isSessionValid(persisted)) {
-          sessionRef.current = persisted;
-          setSessionState(persisted);
-        }
-      } catch (e) {
-        console.warn(`Member session load failed: ${(e as Error).message}`);
-      }
-      await mcp.initialize().catch((e) => {
-        console.warn(`MCP manager initialize failed: ${(e as Error).message}`);
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [mcp, sessionStore]);
-
-  const completeSignIn = useCallback(
-    async (next: Session) => {
-      await sessionStore.set(next);
-      sessionRef.current = next;
-      setSessionState(next);
-    },
-    [sessionStore]
-  );
+    void mcp.initialize().catch((e) => {
+      console.warn(`MCP manager initialize failed: ${(e as Error).message}`);
+    });
+  }, [mcp]);
 
   // Wire Office.js workbook-saved + sheet-changed events into the hook
   // registry. The bridge unsubscribes on unmount so hot-reload doesn't
@@ -698,10 +633,19 @@ export function AppProvider({
     setPerModelStats({});
   }, []);
 
-  const { running: runningModelPref, pendingModelId } = useMemo(
-    () => resolveRunningPref(modelPref, apiKey, edition),
-    [modelPref, apiKey]
+  // Which hosted models this user may run, per the edition (a membership
+  // in the hosted edition; never, in the community edition).
+  const entitledHostedIds = useEntitledHostedIds();
+  const { running: runningModelPref, pendingModelId, pendingReason } = useMemo(
+    () => resolveRunningPref(modelPref, apiKey, edition, entitledHostedIds),
+    [modelPref, apiKey, entitledHostedIds]
   );
+
+  // Hand the edition the services it may use, once the manager exists. The
+  // edition never imports this provider (it would import the edition back).
+  useEffect(() => {
+    edition.attach?.({ mcp, enableConnector, disableConnector });
+  }, [mcp, enableConnector, disableConnector]);
 
   const value: AppContextValue = useMemo(
     () => ({
@@ -710,6 +654,7 @@ export function AppProvider({
       modelPref,
       runningModelPref,
       pendingModelId,
+      pendingReason,
       setApiKey,
       clearApiKey,
       setModelPref,
@@ -739,10 +684,6 @@ export function AppProvider({
       conversationStore,
       workbookId,
       mcp,
-      session,
-      completeSignIn,
-      authClient,
-      sessionStore,
       hooks,
       registerConversationIdGetter,
     }),
@@ -752,6 +693,7 @@ export function AppProvider({
       modelPref,
       runningModelPref,
       pendingModelId,
+      pendingReason,
       setApiKey,
       clearApiKey,
       setModelPref,
@@ -768,10 +710,6 @@ export function AppProvider({
       conversationStore,
       workbookId,
       mcp,
-      session,
-      completeSignIn,
-      authClient,
-      sessionStore,
       hooks,
       registerConversationIdGetter,
       enabledSkillNames,

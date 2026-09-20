@@ -41,16 +41,15 @@ export interface ClientOptions {
   /** Override fetch (tests). Defaults to globalThis.fetch. */
   fetch?: typeof fetch;
   /**
-   * API base URL. Defaults to OpenRouter. The A.CRE member relay points this
-   * at its own OpenRouter-compatible endpoint so member calls are metered
-   * server-side while reusing this exact wire logic.
+   * API base URL. Defaults to OpenRouter. An OpenRouter-compatible proxy (an
+   * edition's hosted model) points this at its own endpoint and reuses this
+   * exact wire logic.
    */
   baseUrl?: string;
   /**
    * Builds the auth headers from the per-request credential (`req.apiKey` /
    * the `apiKey` arg to listModels). Defaults to OpenRouter's
-   * Bearer + branding headers. The relay reinterprets the opaque bearer as a
-   * session token and omits the OpenRouter-specific `HTTP-Referer`.
+   * Bearer + branding headers; a proxy supplies its own.
    */
   buildAuthHeaders?: (credential: string) => Record<string, string>;
 }
@@ -214,7 +213,7 @@ async function* chatStream(
 
 /**
  * Translate OpenRouter SSE JSON lines into ChatEvents. Exported so other
- * OpenRouter-compatible streaming endpoints (e.g. the A.CRE concierge) can
+ * OpenRouter-compatible streaming endpoints (e.g. a hosted-model proxy) can
  * reuse the exact same chunk handling.
  */
 export async function* translateStream(jsonLines: AsyncIterable<string>): AsyncIterable<ChatEvent> {
@@ -346,7 +345,6 @@ function normalizeUsage(u: RawUsage): Usage {
     cost: typeof u.cost === "number" ? u.cost : undefined,
     cacheReadTokens: typeof cacheRead === "number" ? cacheRead : undefined,
     cacheCreationTokens: typeof cacheWrite === "number" ? cacheWrite : undefined,
-    creditsRemaining: typeof u.credits_remaining === "number" ? u.credits_remaining : undefined,
   };
 }
 
@@ -552,8 +550,6 @@ interface RawUsage {
   prompt_tokens_details?: {
     cached_tokens?: number;
   };
-  /** A.CRE relay extension: member balance after this call. */
-  credits_remaining?: number;
 }
 
 interface ChatChunk {

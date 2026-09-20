@@ -8,7 +8,6 @@ export {
   type BundledSkillFiles,
 } from "./bundled";
 export { userSkillSource, USER_SOURCE_ID } from "./user";
-export { acreSkillSource, ACRE_SOURCE_ID, type AcreSkillSourceOptions } from "./registry-acre";
 export { createInMemorySkillStore } from "./store-memory";
 export { createIndexedDbSkillStore } from "./store-indexeddb";
 export {

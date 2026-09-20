@@ -22,7 +22,7 @@ describe("createMcpClient auth", () => {
     const client = createMcpClient({
       serverName: "acre",
       url: "https://hub.example.com/mcp",
-      getAuthToken: () => "member-token",
+      getAuthToken: () => "access-token",
       fetchImpl,
     });
 
@@ -33,7 +33,7 @@ describe("createMcpClient auth", () => {
     // initialize + notifications/initialized + tools/list
     expect(fetchImpl.mock.calls.length).toBeGreaterThanOrEqual(2);
     for (const [, init] of fetchImpl.mock.calls) {
-      expect((init.headers as Record<string, string>).Authorization).toBe("Bearer member-token");
+      expect((init.headers as Record<string, string>).Authorization).toBe("Bearer access-token");
     }
   });
 
@@ -42,7 +42,7 @@ describe("createMcpClient auth", () => {
     const client = createMcpClient({
       serverName: "acre",
       url: "http://hub.example.com/mcp",
-      getAuthToken: () => "member-token",
+      getAuthToken: () => "access-token",
       fetchImpl,
     });
 

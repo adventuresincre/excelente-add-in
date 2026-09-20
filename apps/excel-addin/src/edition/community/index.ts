@@ -20,7 +20,12 @@ export const edition: Edition = {
 };
 
 const NO_ROWS: ModelInfo[] = [];
+const NO_IDS: ReadonlySet<string> = new Set();
 
 export function useHostedPickerRows(): ModelInfo[] {
   return NO_ROWS;
+}
+
+export function useEntitledHostedIds(): ReadonlySet<string> {
+  return NO_IDS;
 }

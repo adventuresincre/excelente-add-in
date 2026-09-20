@@ -1,8 +1,7 @@
 /**
- * One-click A.CRE MCP connections offered in Settings. Bundled client-side
- * (not config-driven) because `config.member.mcp[]` is only delivered
- * after a member authenticates — these buttons must render pre-auth, since
- * clicking one is what starts the sign-in.
+ * One-click A.CRE MCP connections offered in Settings. Bundled client-side:
+ * these buttons render before any sign-in, since clicking one is what starts
+ * the sign-in.
  *
  * Two connection shapes exist in the A.CRE ecosystem:
  *  - "oauth": a fixed endpoint that runs its own hosted sign-in (email +

@@ -60,7 +60,13 @@ export interface ModelInfo {
    * rank to append), `lab` is the host, and the row sits in its own picker
    * group before every lab. Never sent to OpenRouter.
    */
-  hosted?: { lab: string; groupKey: string; groupLabel: string };
+  hosted?: {
+    lab: string;
+    groupKey: string;
+    groupLabel: string;
+    /** The user may not run this row right now (no membership); the picker greys it. */
+    locked?: boolean;
+  };
   contextLength: number;
   pricing: {
     /** USD per 1 prompt token. */
@@ -200,10 +206,4 @@ export interface Usage {
    * subsequent turns cheap.
    */
   cacheCreationTokens?: number;
-  /**
-   * Authoritative member credit balance AFTER this call, echoed by the A.CRE
-   * relay (1 credit = 1¢ of underlying cost). Absent on the direct OpenRouter
-   * (BYOK) path. The UI trusts this as the live balance — no polling required.
-   */
-  creditsRemaining?: number;
 }
